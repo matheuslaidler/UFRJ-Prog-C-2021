@@ -8,4 +8,5 @@ Acabei esquecendo de salvar aqui na época, mas antes tarde do que nunca.
 
 Abraços ao professor Daniel Bastos que conduziu as aulas com maestria.
 
- - escrevi documento tentando condensar isso tudo em uma documentação única e completa, estará no meu blog github pages
+ - Escrevi um documento tentando condensar isso tudo em uma documentação única e até mais completa
+ - Acesse o artigo [Guia Completo de C/C++ ](https://matheuslaidler.github.io/posts/programacao-c/)
