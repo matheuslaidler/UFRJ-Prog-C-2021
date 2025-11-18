@@ -1,0 +1,65 @@
+> Para ser mais preciso, o argv é um array de ponteiros para caractere,
+> como uma array de strings, sendo "argv[0], argv[1], argv[2] ... " os
+> argumentos determinados.
+
+Perfeito --- argv é um array de ponteiros (pra char) porque foi assim
+que o declaramos. Declaramos /char *argv[]/. Poderíamos ter declarao
+
+char **argv
+
+e assim ele seria um ponteiro para um ponteiro. (Muitos programadores
+escrevem assim, inclusive, mas não é necessário e é menos claro neste
+contexto.)
+
+> Como em qualquer condição a saída seria a mesma, seria muito mais
+> prático, ao meu ver, fazer uma condicional única [...]
+>
+> Deixando, então, o main dessa maneira:
+> int main(int argc, char *argv[]) {
+> if (argc != 4) usage(0);
+> ....
+> }
+
+Perfeito!
+
+> Também vale a pena complementar que existem formas mais usuais em C
+> para fazer com que a string se torne um inteiro, como com 'atoi()',
+> 'strtol()' e 'strtoumax()'. Mas nesse caso queremos trabalhar com uma
+> função que use um inteiro não sinalizado.
+
+Podemos usar essas pra não-sinalizado também, mas a ideia aqui é
+aprender a fazer o que essas funções fazem. (Estamos aprendendo a
+fazer o motor. Quando o carro quebrar, saberemos como consertar.)
+
+> Para entendermos melhor a ideia desse loop infinito de for, em que o
+> ‘break’ foi colocado para fazer o loop parar após achar o primeiro
+> número (será melhor entendido mais pra frente), vamos adicionar um
+> print no início deste for e abaixo do C para sabermos seu valor em
+> cada loop.
+
+Excelente investigação.
+
+> Inclusive, podemos ver um pequeno erro nessa parte do código, na parte
+> do argv[3] temos os prints de falha que estarão printando o argv[2]
+> para o usuário, veja:
+>
+> printf("expr: %s is too large\n", argv[2]); /*aqui está printando o argv[2]*/
+
+Bem observado!
+
+> Isso porque usamos a biblioteca matemática e tivemos que usar o
+> ‘pow()’ para potência, o que nos faz ter que usar '-lm' na hora de
+> compilar pelo 'gcc'. Para facilitar iniciantes, dando o 'make' no
+> terminal, mesmo sabendo que dará erro, copie o comando do gcc dado no
+> erro e adicione o '-lm'. A compilação será concluída. Agora todas as
+> nossas operações foram adicionadas ao programa e estarão funcionando
+> perfeitamente.
+
+Você achou a informação --- -lm. Maravilha.
+
+Suas investigações são excelentes, o que implica que você é excelente.
+
+PS. Note que nosso procedimento power() não lida com o expoente zero.
+Sua implementação de '/' também não lida com divisão por zero.
+
+Quer apresentar sobre math.h, -lm e o que fazer no Makefile na próxima aula? Seria legal. Sem obrigações, sem compromissos. Grande abraço!

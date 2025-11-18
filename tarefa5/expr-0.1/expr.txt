@@ -1,0 +1,120 @@
+(*) Tarefa 5: expr-0.1
+
+O propósito desta tarefa é investigar e compreender a estratégia de
+ler uma string numérica (como "123") e convertê-la para um número
+inteiro, mas isso não é a única coisa que faremos.  Aproveitaremos a
+oportunidade também para praticar a leitura e escrita de programas.
+
+(/) Introdução ao programa expr.c
+
+No seu sistema há um programa chamado ``expr'' que é muito útil e
+famoso.  Escrevemos uma versão rudimentar dele no pacote
+
+  http://c.antartida.xyz/pkg/expr-0.1.tar.gz
+
+(O pacote contém programas que já vimos anteriormente como o find.c e
+o xfind.c --- mantenhamos-os aí pra servir como modelo ou alguma
+inspiração sobre qualquer coisa.  Pra esta tarefa, os únicos arquivos
+relevantes são Makefile, expr.c e expr-tests.sh.)
+
+Compile o expr.c agora e peça-o que some 1 com 1, por exemplo.  
+
+%./expr.exe 1 + 1
+2
+%
+
+--8<---------------cut here---------------start------------->8---
+%./expr
+Usage: expr operand-1 operator operand-2
+ where operator must be exactly one of + - %.
+
+We do not support negative or rational numbers.
+
+But we do not suffer from integer overflow and
+ our numbers can go up to 18446744073709551615.
+
+In other words, this program may have some limitations,
+like any other program, but it has no programming flaws.
+
+(*) C99, section 6.2.5.9
+
+``A computation involving unsigned operands can never overflow,
+because a result that cannot be represented by the resulting
+unsigned integer type is reduced modulo the number that is one
+greater than the largest value that can be represented by the
+resulting type.''
+%
+--8<---------------cut here---------------end--------------->8---
+
+(/) Implemente multiplicação e divisão 
+
+Leia o código do expr.c, entenda-o e então implemente um operador para
+multiplicação bem como outro para divisão.  O operador deve ser
+composto de apenas um caractere.  (Mas isso não significa que precise
+ser '*' pra multiplicação, por exemplo.  Você pode escolher, por
+exemplo, o caractere 'x' ou outro.  Veja o que você prefere.)
+
+(/) Implemente a exponenciação
+
+O que chamamos de ``exponenciação'' aqui é a multiplicação repetida,
+já que trabalhamos só com números inteiros.  Sugerimos o caractere '^'
+como operador da exponenciação.  Em símbolos, ``2 ^ 3'' significa
+necessariamente dois vezes dois vezes dois, que é oito.
+
+Não delegue a exponenciação para qualquer biblioteca, ou seja,
+implemente um procedimento ``powers'' que saiba fazer essa
+exponenciação.  Por exemplo, 
+
+  powers(2, 3) == 8
+
+Já investigamos esse procedimento em aulas passadas, mas note que
+agora estamos trabalhando com uint64_t.  Consegue escrevê-lo sem olhar
+o que fizemos anteriormente?
+
+Um dos propósitos dessa tarefa é você praticar.  Se estiver animado,
+implemente mais coisas e aproveite nossas verificações como revisão do
+seu trabalho.  Use sua criatividade.
+
+(/) Redação sobre o processo de conversão de string para inteiro
+
+Redija uma explicação da estratégia de conversão de string para
+inteiro que está implementada no procedimento 
+
+  uint64_t array_to_uint64_unchecked(char *s, uint64_t *u).
+
+Note que não é esse o procedimento que está sendo usado no expr.c.  O
+programa expr.c usa o procedimento 
+
+  uint64_t array_to_uint64(char *s, uint64_t *u), 
+
+que é mais complicado, mas é também mais sábio.  Depois de explicar o
+procedimento /array_to_uint64_unchecked/ em sua dissertação, mostrando
+o que faz cada parte do seu código, disserte então sobre o
+procedimento /array_to_uint64/ e como ele consegue evitar a tentativa
+de construir um número inteiro que não cabe em um /uint64_t/.
+
+Você não precisa apresentar main() e outras partes menos importantes.
+Graduamo-nos.  Daqui pra frente vamos direto aos trechos que nos
+interessam mais.
+
+(/) Sua tarefa, em resumo 
+
+Você precisa implementar multiplicação, divisão, exponenciação e
+dissertar sobre /array_to_uint64_unchecked/ e /array_to_uint64/.
+
+(/) Como testar sua implementação
+
+Dê uma olhada no programa expr-tests.sh.  Você executa dizendo a seu
+shell 
+
+%sh expr-tests.sh
+%
+
+Ele é silencioso se tudo está bem --- ``no news is good news''.
+Abra-o e veja que vários testes foram omitidos porque seu programa
+ainda não implementou multiplicação, divisão ou exponenciação.  Você
+pode remover os comentários desse programa para habilitar cada teste.
+
+Se algum teste falhar, o shell executará o comando-echo depois do
+``||'', o que nos avisará de algo não está correto.  Um teste falha
+quando o programa ``test'' não retorna zero.

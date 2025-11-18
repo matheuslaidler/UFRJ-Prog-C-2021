@@ -1,0 +1,305 @@
+(*) Tarefa ``Brian Kernighan 0.2''
+
+Faça o download do pacote brian-0.2.tar.gz.
+
+--8<---------------cut here---------------start------------->8---
+%wget http://c.antartida.xyz/pkg/brian-0.2.tar.gz
+[...]
+%
+--8<---------------cut here---------------end--------------->8---
+
+Descompacte-o.
+
+--8<---------------cut here---------------start------------->8---
+%tar zxvf brian-0.2.tar.gz
+[...]
+%
+--8<---------------cut here---------------end--------------->8---
+
+Compile-o.
+
+--8<---------------cut here---------------start------------->8---
+%cd brian-0.2/
+%make
+[...]
+cc [...]    getln.c   -o getln
+cc [...]    powers.c   -o powers
+cc [...]    goes-to-zero.c   -o goes-to-zero
+cc [...]    call-by-value.c   -o call-by-value
+%
+--8<---------------cut here---------------end--------------->8---
+
+Maravilha.  (O programa goes-to-zero.c é só diversão com a sintaxe C
+pra quem já estudou limites em Cálculo.  Veja se você compreende.)
+Nosso objeto de estudo nesta tarefa é o programa getln.c, powers.c e
+call-by-value.c.)
+
+(*) Faça uma leitura do programa getln.c
+
+Estudamos o programa getln.c em aulas passadas.  Apesar do nome
+``getln.c'', o programa imprime na saída padrão a maior linha que ele
+encontra --- desde que essa linha não ultrapasse o tamanho de MAXLINE.
+Mantivemos o nome ``getln.c'' porque o mais importante desse programa
+é o procedimento
+
+  int getln(char s[], int lim).
+
+Dê uma olhada de novo nesse programa pra relembrá-lo.  A seguir
+faremos uma análise sobre o que ocorre na interação entre main(),
+getln() e copy().
+
+(*) Uma análise sobre a passagem de arrays a procedimentos
+
+Comece por observar --- no programa getln.c --- que a linha lida é
+escrita no array
+
+  char ln[MAXLINE],
+
+que é declarado e definido no procedimento int main() e não em
+getln().  Isso significa que --- de alguma forma --- getln() é capaz
+de acessar o armazenamento de dados usado por main().  Observe que
+getln() retorna o tamanho da linha e não a linha em si.  (Observe
+também que a mesma situação ocorre com o procedimento copy(), mas
+discutiremos esse procedimento na próxima seção deste documento.)
+
+Como é isso é possível numa linguagem em que cada dado passado a um
+procedimento é sempre uma cópia do dado?
+
+   Em C, todos os argumentos são passados ``por valor'' [--- call by
+   value].  Isso significa que, à função chamada, é dada uma cópia dos
+   valores de seus argumentos em variáveis temporárias ao invés de
+   seus originais.  Isso leva a algumas propriedades diferentes das
+   vistas em linguagens que tra - balham com ``chamadas por
+   referência'' [...] onde a rotina chamada tem acesso ao argumento
+   original, e não a uma cópia local.
+
+   A diferença principal é que, em C, a função chamada não pode
+   alterar o valor de uma variável da função que chama; ela só pode
+   alterar sua cópia temporária, particular.
+
+   Fonte: A Linguagem de Programação C, seção 1.8, ``argumentos ---
+   chamada por valor'', Brian W. Kernighan, Dennis M. Ritchie,
+   tradução de Daniel Vieira, Editora Campus, 1989.
+
+A resposta é que como arrays podem ser de tamanho arbitrário (muito
+grandes), o que a linguagem copia pra dentro de um procedimento é o
+endereço do início do array.  O procedimento getln(), portanto, acessa
+diretamente o mesmo array declarado e definido em main() porque
+getln() vai até a posição na memória onde /ln/ originalmente está.  
+
+A variável /s/ em getln() armazena o endereço da variável /ln/ em
+main().  Assim, quando o procedimento getln() entra em ação, existem
+dois objetos que conhecem a posição do array que guarda a linha lida:
+o primeiro objeto é /ln/ em main() e o segundo é /s/ em getln().  Você
+pode até modificar o valor de /s/ fazendo algo como ``s = 0''.  Isso
+não afeta /ln/ em nada: o efeito é esquecer onde /ln/ está porque
+trocamos a informação que tínhamos pelo número zero.
+
+Observe o programa call-by-value.c, compile-o, execute-o.
+
+--8<---------------cut here---------------start------------->8---
+%./call-by-value.exe
+ln em 0xffffcc20
+ s em 0xffffcc20
+ s em 0x0
+ln em 0xffffcc20 --> lorem ipsum dolor sit a met
+%
+--8<---------------cut here---------------end--------------->8---
+
+Apesar de termos destruído o valor que havia em /s/, deixando o
+procedimento byval() sem ter como acessar a string "lorem ipsum dolor
+sit a met", o procedimento main() continua perfeitamente capaz de
+imprimi-la porque main() ainda sabe que a string está na posição da
+memória armazenada por /ln/.
+
+Isso é ``call-by-value''.  
+
+Números são sempre passados como cópia pra dentro de procedimentos.
+Se um número ocupa 8 bytes na memória, esses 8 bytes são copiados pra
+dentro de um procedimento que recebe esse número como argumento.  Já
+com arrays, a linguagem passa uma cópia do endereço onde está o
+primeiro elemento do array.  (O que é desejável porque não queremos
+arrays enormes sendo copiados [pra dentro e pra fora de procedimentos]
+toda vez que um array for passado a um procedimento.)  Já quando
+queremos de fato uma cópia do *conteúdo* do array, teremos que fazer
+nós mesmos.  É o que faz o procedimento copy().
+
+(*) O procedimento copy()
+
+O procedimento ``retorna void'' --- que é o mesmo que dizer que não
+retorna nada.  ``Void'' é palavra inglesa que significa ``vazio''.  É
+uma forma de dizer ao compilador que o procedimento sendo invocado não
+produzirá dados de retorno, assim o compilador não precisa preparar um
+espaço pra armazenar esse retorno.
+
+Eis o procedimento.
+
+--8<---------------cut here---------------start------------->8---
+void copy(char to[], char from[])
+{
+  /* copy: copy 'from' into 'to'; assume /to/ is big enough */
+  int i; i = 0;
+  while ((to[i] = from[i]) != '\0')
+    ++i;
+}
+--8<---------------cut here---------------end--------------->8---
+
+Observe que isso não é uma estratégia geral de cópia de arrays.  É uma
+estratégia específica para arrays de /caracteres/ porque
+convencionamos em demarcar o fim de uma string com o byte '\0'.  (Não
+fosse por esse detalhe seria uma estratégia geral de cópia de arrays.)
+
+(*) Escrevendo novos procedimentos com ênfase em call-by-value
+
+Observe agora o programa powers.c.  O propósito desse programa é
+ilustrar mais um pouco como se escreve um procedimento e enfatizar
+essa característica da linguagem C chamada de call-by-value.
+
+--8<---------------cut here---------------start------------->8---
+%./powers.exe
+       0        1        1
+       1        2       -3
+       2        4        9
+       3        8      -27
+       4       16       81
+       5       32     -243
+       6       64      729
+       7      128    -2187
+       8      256     6561
+       9      512   -19683
+%
+--8<---------------cut here---------------end--------------->8---
+
+O programa imprime uma espécie de tabela de potências de 2 e potências
+de -3.  Note que o procedimento power_v2() não usa um nome /i/, ou
+seja, ele faz o mesmo trabalho que power() com menos variáveis, o que
+mostra que o argumento ``int n'' de power_v2() nada mais é que uma
+variável local ao procedimento power_v2() --- e, portanto, o
+procedimento power_v2() pode fazer com ele o que bem entende.  O
+argumento /n/ de power_v2() não é a variável /i/ do laço-for em
+main(); é uma cópia de /i/ --- call-by-value.
+
+(*) Escreva o programa lnlen.c
+
+Escreva um programa chamado lnlen.c.  (Adicione-o a seu Makefile para
+uma vida mais fácil.)  O objetivo do programa é ler linhas da entrada
+padrão --- assim como getln.c --- e ele deve imprimir cada linha na
+saída padrão indicando o número da linha bem como seu tamanho.  Por
+exemplo, o lnlen.c que escrevi mostra o código-fonte de count-digits.c
+da seguinte forma:
+
+--8<---------------cut here---------------start------------->8---
+%./lnlen.exe < count-digits.c | head -13
+1: 20: #include <stdio.h>
+2: 2:
+3: 18: int main(void) {
+4: 26:   int c, nwhite, nother;
+5: 47:   int ndigit[10]; /* 0, 1, 2, 3, 4, ..., 9 */
+6: 2:
+7: 24:   nwhite = nother = 0;
+8: 32:   for (int i = 0; i < 10; ++i)
+9: 20:     ndigit[i] = 0;
+10: 2:
+11: 36:   while ((c = getchar()) != EOF) {
+12: 31:     if (c >= '0' && c <= '9')
+13: 26:       ++ndigit[c - '0'];
+%
+--8<---------------cut here---------------end--------------->8---
+
+Note que em lnlen.c não precisaremos de copy(), nem de max, nem de
+longest.  O programa é mais simples.
+
+Será que em vez de um laço-while seria melhor usar um laço-for?
+Experimente ambas versões e observe sua preferência.
+
+Vou lhe mostrar a minha preferência, mas expressa em ROT13.  ROT13 é
+também chamado de cifra de César porque foi uma cifra usada pelo
+Império Romano.  O que a cifra faz é trocar cada letra do /input/ por
+uma letra treze posições à frente na tabela ASCII, rotacionando-a
+sempre que preciso.  (O Império Romano não tinha uma tabela ASCII,
+certamente, mas eles tinham um alfabeto --- e charmosos numerais [de
+aritmética inefável].)
+
+--8<---------------cut here---------------start------------->8---
+#vapyhqr <fgqvb.u>
+#qrsvar ZNKYVAR 1000
+
+vag trgya(pune f[], vag yvz);
+
+vag znva(ibvq) {
+  vag yra; pune ya[ZNKYVAR];
+  sbe (vag v = 1; (yra = trgya(ya, ZNKYVAR)) > 0; ++v)
+    cevags("%q: %q: %f", v, yra, ya);
+  erghea 0;
+}
+
+vag trgya(pune f[], vag yvz) 
+{
+  /* trgya: ernq n yvar vagb f, erghea yratgu */
+  vag p, v;                  // rad a~ é RBS r rad aãb é arjyvar
+  sbe (v = 0; v < yvz - 1 && (p = trgpune()) != RBS && p != '\a'; ++v)
+    f[v] = p; // nphzhyn n ``fgevat''
+  vs (p == '\a') {
+    f[v] = p; // pbybpn n dhroen-qr-yvaun rz f (bh svpnzbf frz ryn)
+    ++v;
+  }
+  f[v] = '\0'; // ``srpun'' n fgevat --- b dhr é hzn fgevat?
+  erghea v;    // zbfger b qrfraub qr Oevna Xreavtuna qn cátvan 31
+}
+--8<---------------cut here---------------end--------------->8---
+
+(*) Redação sobre o lnlen.c
+
+Redija um texto que apresente seu programa lnlen.c e explique sua
+implementação, em particular a operação de getln().  O propósito maior
+deste trabalho é a compreensão de getln().  
+
+Seu texto deve ensinar a alguém no seu nível de conhecimento a ler e
+compreender o programa com pouco esforço mental.  Você não precisa
+respeitar a ordem do código-fonte.  Você poderia começar pelo meio ou
+pelo fim, se quiser.  Na maioria das vezes a ordem que o compilador
+precisa ler o código não é a melhor ordem para se apresentar a alguém:
+não somos compiladores.
+
+(*) O formato do seu documento
+
+Se você *não* for escrever em LaTeX, escreva um arquivo-texto.  (Você
+não precisa de Microsoft Word, Google Docs ou outros.  Se for
+inevitável, tudo bem --- mande-nos um PDF do trabalho.)
+
+Muitas ferramentas de linha de comando trabalham baseadas em linhas.
+É por isso que programadores --- que são os maiores apreciadores de
+programas de linha de comando --- trabalham sempre com linhas curtas.
+
+Por exemplo, o documento que define o protocolo HTTP versão 1.1 pode
+ser lido em 
+
+  https://www.rfc-editor.org/rfc/rfc2616.txt.  
+
+RFC significa ``[R]equest [F]or [C]omments''.  Todo RFC é escrito no
+mesmo formato.  Se adaptarmos o programa getln.c 
+
+--8<---------------cut here---------------start------------->8---
+  if (max > 0) /* there was a line */
+    printf("%d:%s", max, longest);
+--8<---------------cut here---------------end--------------->8---
+
+pra imprimir o tamanho da maior linha, veremos que a maior linha nesse
+documento tem tamanho 73.
+
+--8<---------------cut here---------------start------------->8---
+%curl -s https://www.rfc-editor.org/rfc/rfc2616.txt | ./getln.exe
+73:   and status of this protocol.  Distribution of this memo is unlimited.
+%
+--8<---------------cut here---------------end--------------->8---
+
+(*) Sugestões de configurações para o Sublime
+
+{
+  // "font_size": 15,
+  "tab_size": 2,
+  "translate_tabs_to_spaces": true,
+  "rulers": [72, 80],
+}
+brian-0.2.txt
+Exibindo brian-0.2.txt.Entregando…

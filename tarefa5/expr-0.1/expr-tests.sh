@@ -1,0 +1,10 @@
+#!/bin/sh
+test 2 -eq $(./expr 1 + 1)  || echo '1 + 1 =/= 2'
+test 0 -eq $(./expr 1 - 1)  || echo '1 - 1 =/= 0'
+test 0 -eq $(./expr 16 % 2)  || echo '16 % 2 =/= 0'
+test 1 -eq $(./expr 17 % 2)  || echo '17 % 2 =/= 1'
+# test 0 -eq $(./expr 0 \* 1)  || echo '0 * 1 =/= 0'
+# test 32 -eq $(./expr 16 \* 2)  || echo '16 * 2 =/= 32'
+# test 0 -eq $(./expr 2 \* $(./expr 2 ^ 63)) || echo '2 * 2^63 fails'
+# test 0 -eq $(./expr 2 ^ 64) || echo '2^64 fails'
+# test 2 -eq $(./expr 6 / 3) || echo '2 =/= 6/3'

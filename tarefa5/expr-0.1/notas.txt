@@ -1,0 +1,214 @@
+O expr.c é um programa simples e incompleto capaz de, apenas, fazer pequenas operações limitadas do ponto de vista matemático.
+Nele não existe a possibilidade de cálculo que dê ou que contenham números negativos ou racionais. 
+Além das únicas funções disponíveis são para achar a soma, a subtração e o resto da divisão de dois - e sempre dois - operandos.
+
+
+---Explicação do código do programa por partes e em outra ordem---
+
+
+Além das bibliotecas necessárias para o funcionamento do programa e a definição da variável sobre as operações os quais o programa terá suporte, temos uma função criada com prints para um pequeno manual de uso dedicado ao novo usuário.
+Esta função é reconhecida pela linha " void usage(int e) ". Ela será printada na tela ao usuário iniciar o programa sem colocar os operadores e os operandos de entrada. 
+Isso só acontece por conta da parte dessa primeira linha do código abaixo na função main do programa:
+
+	if (argc <= 1) usage(0); /* Mostrar pro usuário a mensagem colocada no inicio do propgrama como tutorial, ou seja, o primeiro argumento string seria o próprio programa "./expr.exe" */
+	if (argc <  4) usage(1); /* Tutorial para o usuário que não colocou os argumentos necessários para a função, colocando menos argumentos que os dois operandos e o operador / ex: 1; 1 +  */
+	if (argc >  4) usage(2); /* Tutorial para o usuário que não colocou os argumentos necessários para a função, colocando mais operação que o permitido  / ex: 1 + 1 + / 1 + 1 + 1 */
+
+As linhas seguintes são para previnir os erros de uma entrada errada pelo usuário, assim como deixei na explicação resumida como comentário nas respectivas linhas.
+
+Entendendo a função 'main':
+A função reconhecida pela linha: " int main(int argc, char *argv[]) "  é a "main" para "fazer o programa funcionar". Podemos ver que é uma função com argumentos.
+O argc será responsável por determinar a quantidade de argumentos escritos pelo usuário e o argv é um ponteiro para a memória onde as strings estarão armazenadas.
+Para ser mais preciso, o argv é um array de ponteiros para caractere, como uma array de strings, sendo "argv[0], argv[1], argv[2] ... " os argumentos determinados. 
+Como é um ponteiro para um caractere e toda a array será composta disso, então qualquer parte apontada será de um caractere. E se estamos falando de ponteiro, será sempre o primeiro caractere da array.
+Portanto, o primeiro elemento (argv[0]) é sempre o nome do programa. 
+Com isso podemos entender ainda melhor as condicionais colocadas acima. Podemos ver o argc verificando se a quantidade de argumentos da entrada estão dentro das condições.
+Se em qualquer uma dessas verificações das condições o resultado na variável especial do shell ($?) for igual a 0, 1 ou 2, então mostrará o print do tutorial sobre como usar o programa, pois foi usado de maneira errada. 
+Assim podemos saber qual foi o tipo de erro do usuário, se pecou pelo excesso, pela falta ou se propositalmente quis abrir ajuda. 
+Como em qualquer condição a saída seria a mesma, seria muito mais prático fazer uma condicional única, como sendo diferente do total de argumentos suportados (argc != 4) => [programa,operando,operador,operando = 4] 
+Deixando, então, o main dessa maneira:
+
+	int main(int argc, char *argv[]) { 
+	  if (argc != 4) usage(0);
+	....
+	}
+
+ Observação:
+ Como nosso programa é usado via shell, podemos usar três operandos se quisermos, usando o que o shell pode nos oferecer para complementar nosso programa.
+ Se o usuário quer fazer 1 + 1 + 1 diretamente pelo programa, isso seria errado, mas se usarmos o shell para somar com o resultado de  1+1 desse programa, aí sim daria tranquilamente. 
+ Então, executaremos o programa pelo shell dentro da execução do nosso programa no shell para fazer o 1 + 1 + 1>
+ ./expr 1 + $(./expr 1 + 1)  ->  aqui estamos usando o programa para somar 1 ao resultado da soma que esse mesmo programa fará.
+ 
+  
+  
+ 
+ Agora, para fazer com que esses argumentos em string sejam números que possam ser operador de algum modo, temos uma função interessante para este fim.
+Ele é reconhecido no codigo pela linha: " uint64_t array_to_uint64(char *s, uint64_t *u) ", porém veremos uma versão mais simplificada do mesmo primeiro, para um entendimento mais didático.
+Já esta função será determinada como: " uint64_t array_to_uint64_unchecked(char *s, uint64_t *u) ".
+É interessante ressaltar que 'uint' é 'unsigned int' que é um inteiro não sinalizado. Já o '64' é de '64 bits' mesmo. Ele é dado pelo cabeçalho inttype.
+Também vale a pena complementar que existem formas mais usuais em C para fazer com que a string se torne um inteiro, como com 'atoi()', 'strtol()' e 'strtoumax()'.
+Para entendermos melhor, vamos primeiro dar uma olhada deste código como um todo, já que sabemos qual a ideia da função;
+
+----------------------------------------------------------
+uint64_t array_to_uint64_unchecked(char *s, uint64_t *u) 
+{
+  uint64_t pos; 
+  uint64_t r;
+  uint64_t c;
+
+  pos = 0; r = 0;
+
+  for ( ;; ) {
+    c = (uint64_t) (s[pos] - '0');
+    if (c < 10) {
+      r = r * 10 + c; ++pos; continue;
+    }
+
+    break;
+  }
+
+  *u = r;
+  return pos;
+}
+----------------------------------------------------------
+
+O que realmente esta sendo utilizado em nosso programa  é:
+
+----------------------------------------------------------
+
+uint64_t array_to_uint64(char *s, uint64_t *u) 
+{
+  uint64_t pos;
+  uint64_t r;
+  uint64_t c;
+
+  pos = 0; r = 0;
+
+  for ( ;; ) {
+    c = (uint64_t) (unsigned char) (s[pos] - '0');
+    if (c < 10) {
+      if( ((UINT64_MAX - c) / 10) >= r) 
+        r = r * 10 + c;
+      else return -1; /* doesn't fit */
+      ++pos; continue;
+    }
+    break;
+  }
+
+  *u = r;
+  return pos;
+}
+
+----------------------------------------------------------
+
+Nesses códigos podemos perceber que 
+
+ Agora complementaremos nosso programa adicionando novas formas de operações, sendo elas a multiplicação, divisão e a exponenciação.
+ 
+ Veremos o código abaixo:
+ 
+ int operator; 
+  operator = argv[2][0];
+
+  /* printf("op1 = %lu\n", op1); */
+  /* printf("op2 = %lu\n", op2); */
+
+  switch(operator) {
+
+  case '-':
+    if (op1 < op2) {
+      printf("expr: illegal subtraction\n");
+      exit(101);
+    }
+    r = op1 - op2;
+    printf("%" PRIu64 "\n", r);
+    break;
+
+  case '+':
+    r = op1 + op2;
+    printf("%" PRIu64 "\n", r);
+    break;
+
+  case '%':
+    r = op1 % op2;
+    printf("%" PRIu64 "\n", r);
+    break;
+
+  default:
+    printf("expr: unknown operator ``%c''\n", operator);
+    exit(101);
+    break;
+  }
+  
+  Este é o código usado no programa. Podemos ver que é simples a forma como trabalha com as operações. Agora basta adicionarmos os casos das operações que iremos implementar ao funcionamento do programa.
+  
+  Para multiplicação, por exemplo, podemos fazer assim:
+		  case '*':
+			r = op1 * op2;
+			printf("%" PRIu64 "\n", r);
+			break;
+			
+ Porém assim simplesmente não funcionará. Eu colocarei a biblioteca <math.h> e adicionarei os operadores que queremos.
+ 
+  O código inteiro com essas novas operações ficará assim:
+  
+  int operator; 
+  operator = argv[2][0];
+
+  /* printf("op1 = %lu\n", op1); */
+  /* printf("op2 = %lu\n", op2); */
+
+  switch(operator) {
+
+  case '-':
+    if (op1 < op2) {
+      printf("expr: illegal subtraction\n");
+      exit(101);
+    }
+    r = op1 - op2;
+    printf("%" PRIu64 "\n", r);
+    break;
+
+  case '+':
+    r = op1 + op2;
+    printf("%" PRIu64 "\n", r);
+    break;
+
+  case '%':
+    r = op1 % op2;
+    printf("%" PRIu64 "\n", r);
+    break;
+	
+  case '*':
+    r = op1 * op2;
+    printf("%" PRIu64 "\n", r);
+    break;
+	
+  case '/':
+    r = op1 / op2;
+    printf("%" PRIu64 "\n", r);
+    break;
+	
+  case '^':
+    r = pow(op1, op2);
+    printf("%" PRIu64 "\n", r);
+    break;
+
+  default:
+    printf("expr: unknown operator ``%c''\n", operator);
+    exit(101);
+    break;
+	
+  }
+  
+  Se apenas usasse esse código, provavelmente não conseguiria compilar e entraria em uma dor de cabeça.
+  Isso porque usamos a biblioteca matemática e tivemos que usar o pow() para potência, o que nos faz ter que usar '-lm' na hora de compilar pelo 'gcc'
+  Para facilitar iniciantes, dando o 'make' no terminal, mesmo sabendo q dará erro, copie o comando do gcc dado no erro e adicione o '-lm'. A compilação será concluída.
+  Agora todas as nossas operações estão funcionando perfeitamente.
+  Podemos também fazer esses tipos de adição de operações com a função power() que temos neste código.
+  
+  
+  
+  
+  
+  

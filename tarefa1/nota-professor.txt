@@ -1,0 +1,13 @@
+Caro Matheus, excelente trabalho. Muito boa a seguinte observação:
+
+"Para pegar o número total de caracteres usados, podemos somar o other
+com os números encontrados e teremos o total. Isso sem contas os espaços
+e quebras-de-linha."
+
+Isso é uma propriedade do programa e serve pra que verifiquemos a saída dele. Excelente observação e originalidade da redação.
+
+Esse é um dos benefícios da redação. Ela dá espaço pra que sejamos originais e documentemos observações importantes sobre o tema que estamos estudando.
+
+Note também que a natureza da tabela ASCII faz com que c - '0' seja sempre um número entre 0 e 9 inclusive desde que c seja um caractere dentre '0', '1', '2', ..., '9'. Observar isso prova que o /statement/ ++ndigit[c - '0'] sempre funcionará porque o índice nunca cai fora dos limites do array, que é de zero a nove.
+
+Grande abraço.

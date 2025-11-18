@@ -1,0 +1,117 @@
+Caros estudantes, às vezes estamos simplesmente errados.  A coisa mais
+inteligente a fazer quando estamos errados é reconhecer os fatos.  Num
+só relance a gente vai de simplesmente errado pra totalmente correto.
+Simples assim.
+
+(*) Introdução
+
+O que faço neste documento é uma ilustração do que é dissertar sobre
+uma dificuldade.  É um bom exercício expor enfaticamente o seu erro de
+raciocínio, sua suposição incorreta.  Os erros precisam estar mais
+claros que os acertos.  Você pode narrar a sequência de eventos que
+culminaram com a dedução incorreta: o contexto de um erro é sempre
+relevante à causa do erro, assumindo que uma causa possa ser inferida.
+
+(*) A confusão chamada argv de 21 de dezembro de 2021
+
+Não é verdade que as strings da linha de comando estão sequencialmente
+na memória do computador e foi exatamente o que observamos no minuto
+39:00 da aula de hoje: observamos lá que elas não estão
+sequencialmente na memória.
+
+É verdade que os elementos de um array estão sempre sequencialmente na
+memória do computador.  É assim em qualquer máquina.  Um array é
+*sempre* uma área *contígua* de memória.  Entretanto, 
+
+  char *argv[]
+
+é um array de *ponteiros* (pra char), ou seja, argv[] é um array em
+que cada posição dele armazena o endereço onde se localiza uma string
+--- que é uma string digitada na linha de comando.
+
+Se olharmos os endereços de cada *posição* do array, veremos que todos
+eles estão sequencialmente na memória do computador.  Mas o *valor*
+que guardamos em cada elemento (do array argv[]) pode ser qualquer
+endereço de memória.  (É claro.  Você guarda lá o que quiser.)
+
+Sendo assim, considere a linha de comando
+
+  ./argv.exe a bc d
+
+Essa linha de comando produzirá um array com quatro elementos e, logo,
+o array possuirá índices 0, 1, 2 e 3.  Qual será o valor de argv[0]?
+Pode ser qualquer valor.  Pode ser, por exemplo,
+
+  argv[0] = 123
+
+Mas, se for esse o valor, então no endereço de memória 123 estará o
+caractere '.' e, logo, no endereço 124 estará o '/' e assim
+sucessivamente --- já que o primeiro argumento da linha é a string
+"./argv.exe".  Assim, usando a notação
+
+  (endereço, valor),
+
+temos a memória com o seguinte conteúdo:
+
+  (123, '.')
+  (124, '/')
+  (125, 'a')
+  (126, 'r')
+  (127, 'g')
+  (128, 'v')
+  (129, '.')
+  (130, 'e')
+  (131, 'x')
+  (132, 'e')
+  (133, '\0').
+
+Strings também são arrays e, portanto, ocupam regiões *contíguas* de
+memória.  Por isso a string "./argv.exe" tem que estar disposta dessa
+forma aí.
+
+Agora pergunte-se --- onde está argv[0]?  Lembre-se que argv[0]
+armazena o endereço onde se localiza a string "./argv.exe".  Perguntar
+onde está argv[0] significa perguntar onde está escrito o número 123.
+Pode estar em qualquer lugar.  Não precisa estar à esquerda do
+endereço 123, por exemplo.  Pode estar em 456, por exemplo.  Assim,
+podemos ter a memória disposta como...
+
+  (0, ...)
+  (1, ...)
+  [...]
+  (123, '.')
+  (124, '/')
+  (125, 'a')
+  (126, 'r')
+  (127, 'g')
+  (128, 'v')
+  (129, '.')
+  (130, 'e')
+  (131, 'x')
+  (132, 'e')
+  (133, '\0')
+  [...]
+  (456, 123)
+
+E foi isso que ocorreu no momento 39:00 hoje.  Passei a imprimir os
+valores argv[0] e argv[1] e estava esperando ver os valores &argv[0] e
+&argv[1].  Enquanto argv[0] e argv[1] são as posições das strings da
+linha de comando --- o primeiro e o segundo argumentos ---, &argv[0] e
+&argv[1] são os lugares onde estão anotados os endereços onde (na
+memória) estão esses argumentos da linha de comando.
+
+Confundi as duas coisas.
+
+--8<---------------cut here---------------start------------->8---
+Definição.  Confundir.  Tomar uma coisa por outra.
+--8<---------------cut here---------------end--------------->8---
+
+Tomei argv[0] e argv[1] por &argv[0] e &argv[1] e fiquei perplexo por
+que o valor de argv[0] era um número menor que argv[1], o que não é
+problem algum.  O que nunca acontecerá é termos &argv[0] à direita de
+&argv[1]: num array, o elemento n deve estar sempre à frente do
+elemento n - 1; já o *valor* armazenado no elemento do array pode ser
+qualquer número, qualquer endereço de memória.  (Pode ser zero em
+todos eles, por exemplo.)
+
+É o relatório.

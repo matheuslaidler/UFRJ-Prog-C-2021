@@ -1,0 +1,226 @@
+Matheus Laidler
+matheuslaidler@ufrj.br
+matheuslaidler@gmail.com
+
+(*) Introdução
+
+ Em um determinado dia seu chefe lhe pediu para ajudar o time de suporte.
+A tarefa consistia em verificar os relatórios que seguiam a norma padrão 
+do limite de uso dos caractéres e linhas por documento. Então ele ficou
+atuando como primeiro filtro dos relatórios, como a primeira camada de
+correção. Aqueles que tiverem passado do limite de linhas e caracteres
+seriam descartados, aqueles que respeitaram serão mandados para a equipe
+de correção para depois poderem ser enviados ao chefe. Como você é um
+estagiário e estava cheio de outras funções para fazer, surgiu a ideia
+de automatizar isso e criar um programinha que faça essa análise direto.
+
+ É exatamente esse tipo de programa que iremos analisar.
+Como o programa irá verificar linha por linha e letra por letra, teremos
+que deixar bem claro o que será dito como caracteres, strings e arrays:
+
+ É importante considerarmos uma 'string de palavras' como uma lista de 
+caracteres, ou seja, banana seria um array com cada elemento sendo cada
+letra dessa palavra. Portanto, uma linha inteira seria uma lista de todas
+as caracteres presentes, como letras e espaços, por exemplo.
+ 
+ .Cada letra, espaço e caractere escape serão contados como um caractere.
+[Caractere escape seriam os tipos de caracteres que são interpretados de
+outra forma, como o '/n', que ao invés de printar a escrita direto, será
+feito a função de pular uma linha]
+ OBS: Para usuários de windows uma, quebra de linha pode contar como dois.
+Isso porque o padrão desse sistema é ser \r\n ao invés de ser apenas \n.
+Dá para verificar o tipo com programas de edição de texto como NotePad++,
+podemos ver se está como Unix(LF) ou Windows(CR LF)
+ .Podemos até adicionar uma condicional no programa para sempre que
+ achar um /r antes de um /n descartar ele da contagem ou simplesmente 
+ colocá-lo no loop for como uma dar formas de parar o loop, dessa forma
+ ele já não será contado de qualquer maneira. O problema é que nunca daria
+ para verificar se o /n existe pois antes de chegar nele o loop já pararia. 
+ Não me parece necessário perder muito tempo nisso.
+ ex: se a lista[i] = \n, podemos ver se lista[i-1] é \r, se for, não contar
+ essa caractere. Para n contar nem o /n nem o /r podemos so deixá-los na
+ condição do loop-stop e não adicionar nenhuma condicional if.
+
+ Cada caractere ocupa um byte, então o '/n' e o '/0' (nulo) forem uma lista 
+ de caracteres da linha do meio, então podemos ver dessa maneira:
+
+	lista = ['b','a','n','a','n','a','\n','\0']
+
+  	  	 B A N A N A \n \0    ->      08 bytes
+		-----------------------   (1 byte = 8 bits)
+   		 8 8 8 8 8 8  8  8    ->      64 bits
+		            		  
+
+(*) Como usar o programa
+
+Usamos o programa da forma típica UNIX, ou seja, usando o /shell/ para
+preparar a entrada do programa. Podemos até especificar em que parte
+do arquivo queremos que nosso programa rode.
+
+Obs> Para usuários de sistemas UNIX/Linux que precisam dar privilégio para
+rodar o programa pela primeira vez, podemos então usar o comando 'chmod +x'
+adicionando o nome do programa posteriormente.
+
+ Exemplo de uso do programa:
+
+$> ./lnlen < count-digits.c | head -13
+
+1: 19: #include <stdio.h>
+2: 1:
+3: 17: int main(void) {
+4: 25:   int c, nwhite, nother;
+5: 46:   int ndigit[10];
+6: 1:
+7: 23:   nwhite = nother = 0;
+8: 31:   for (int i = 0; i < 10; ++i)
+9: 19:     ndigit[i] = 0;
+10: 1:
+11: 35:   while ((c = getchar()) != EOF) {
+12: 30:     if (c >= '0' && c <= '9')
+13: 25:       ++ndigit[c - '0'];
+
+
+(*) Entendendo o funcionamento
+
+ Para entendermos como o programa funciona, teremos que explicar por parte
+cada uma de suas funcionalidades.
+O programa em sua base necessitará de um código que leia uma linha inteira
+e seus elementos para que dê o resultado de caracteres, se esse resultado 
+for maior que 0, ou seja, se existir uma linha alí, mesmo que vazia, ele 
+será contado como uma linha e partirá pra próxima. Essa função que percorre
+a linha inteira fica com o trabalho de verificar os elementos e nos mostrar
+a quantidade de elementos dessa lista.
+
+ Podemos perceber que a função que lê a linha acaba sendo a mais importante
+para um funcionamento geral do programa. Essa função chamaremos de 'getline'.
+Então ela será a primeira função que veremos nessa análise.
+
+ Para começar o programa já indicamos algumas coisas, como tipos de variáveis
+e definimos certos valores. Por exemplo, podemos definir um valor máximo de
+elementos de uma lista como mil, podemos também indicar o resultado de getline
+como um inteiro, e seus argumentos como uma lista e um inteiro - que seriam
+a lista de caracteres da linha e seu tamanho.
+
+ex:
+
+
+#define MAXLINE 1000
+
+int getln(char s[], int lim);
+
+ 
+ Então agora vamos explicar como ficará o getline para funcionar daquela forma.
+ 
+ Teremos que indicar nossas variáveis 'c' e 'i' para usarmos, por exemplo, o i 
+ queremos que funcione como o número de referência a cada elemento da lista,
+ então temos que declarar ele como inteiro antes.
+ 
+ Para que o programa percorra em toda a lista de caracteres (a linha inteira),
+ precisamos que ele percorra por cada elemento, então temos que fazer um loop
+ para que o i esteja sempre sendo +1 até chegar no elemento final da linha.
+ 
+ O elemento final pode ser representado de algumas formas: 
+   .Ou chegou no final do arquivo (EOF), como quando é a ultima linha;
+   .Ou quando existe a quebra de linha;
+   .Ou quando chegou no ultimo elemento limite, que seria o MAXLINE - 1 
+    (como começa do elemento 0, então os 1000 seriam do 0 ao 999 da lista)
+ 
+ Enquanto essas condições, que mostram o elemento final, ainda não apareceram, o
+loop continua seguindo por cada elemento até que uma destas seja verdadeira. Aí
+significa que a linha acabou. Porém, como ele precisa parar o loop ao chegar nessas
+condições, o /n (quebra de linha) acaba não sendo contado, então podemos colocar uma
+condicional para adicionarmos ela ao contador. Fora da condicional e do loop temos
+também que adicionar o nulo, a caracter que fecha a string.
+
+ Veja o exemplo:
+
+int getln(char s[], int lim) 
+{
+  int c, i;                 
+  for (i = 0; i < lim - 1 && (c = getchar()) != EOF && c != '\n'; ++i)
+    s[i] = c;
+  if (c == '\n') {
+    s[i] = c; 
+    ++i;
+  }
+  s[i] = '\0'; 
+  return i;    
+}
+
+
+ Podemos observar que o C está sendo igualado para ter o valor do elemento da lista,
+ Assim podemos comparar o valor do elemento da lista que passamos para ver se chegou
+ no final da linha ou não.
+ Então, no final disso tudo, o 'i' acumulado é o valor total de caracteres.
+ 
+
+ Agora podemos verificar a função principal do programa, a função Main
+
+ Ela que fará a contagem do númerio de linhas, usará o 'i' para isso, portanto ele
+ iniciará como 1, pegará o resultado da função getline e colocará como 'len' e irá
+ verificar se é maior que 0, se for irá então adicionar +1 ao numerio de linhas até
+ que o getline seja igual a 0, ou seja, não existir mais linha e parar o loop.
+ Quando ele parar, irá printar o número de cada linha, dado pelo 'i', o número de
+ caracteres de cada linha pego do getline como 'len', e o resultado de cada linha
+ pego pelo 'ln', tudo printado pelo 'printif'.
+ Lembrando que o len e o ln foram declarados antes desse for. O ln e o MAXLINE foram
+ usados como argumento pro getline. Depois disso tudo vem a finalização com return 0
+ 
+ Veja o exemplo:
+ 
+int main(void) {
+  int len; char ln[MAXLINE];
+  for (int i = 1; (len = getln(ln, MAXLINE)) > 0; ++i)
+    printf("%d: %d: %s", i, len, ln);
+  return 0;
+}
+
+
+
+Observações>
+
+É interessante ver uma relação importante sobre a funções e os valores das variáveis. 
+A variável 's' armazena o endereço da variável 'ln' em
+main, por exemplo. 
+Procedimentos desse tipo nos dão um exemplo de uma funcionalidade muito interessante
+da linguagem C. Levando esse programa como exemplo;
+ Quando o procedimento getln() entra em ação, existem
+ dois objetos que conhecem a posição do array que guarda a linha lida:
+ o primeiro objeto é 'ln' em main e o segundo é 's' em getline. 
+ Mesmo que modifiquemos o valor de 's', fazendo algo como ''s = 0'', não afetaria
+ o valor de 'ln' em nada: o efeito é esquecer onde 'ln' está porque trocamos a 
+ informação que tínhamos pelo número zero.
+ Apesar de tirar o valor que de 's', o procedimento main continua bem 
+ porque ainda sabe que a string está na posição da memória armazenada por 'ln'.
+ Em outras palavras, se você tem duas variáveis ligadas, modificar uma não significa
+ que também modificou a outra, o que pode ser visto como garantia de integridade.
+  - Essa funcionalidade é importante e interessante, conhecida como 'Call By Value'.
+
+
+
+. O código inteiro>
+
+#include <stdio.h>
+#define MAXLINE 1000
+
+int getln(char s[], int lim);
+
+int main(void) {
+  int len; char ln[MAXLINE];
+  for (int i = 1; (len = getln(ln, MAXLINE)) > 0; ++i)
+    printf("%d: %d: %s", i, len, ln);
+  return 0;
+}
+
+int getln(char s[], int lim) 
+{
+  int c, i;                 
+  for (i = 0; i < lim - 1 && (c = getchar()) != EOF && c != '\n'; ++i)
+    s[i] = c;
+  if (c == '\n') {
+    s[i] = c; 
+    ++i;
+  }
+  s[i] = '\0';
+  return i;    
+}

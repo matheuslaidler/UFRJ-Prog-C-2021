@@ -1,0 +1,56 @@
+Brilhantes investigações e explicações. Total domínio sobre o tema.
+
+>
+> saída do programa de ordem certa:
+> $ ./antartida
+> antartida.xyz has address http://1091908786
+> Colando o endereço, o navegador lerá 1091908786 como 65.21.52.178
+> que redireciona ao site antartida.xyz
+> http://65.21.52.178 -> http://antartida.xyz - serviço certo
+>
+> Se verificarmos, o número dado é um decimal que é convertido
+> para IP. O valor 1091908786 = 65.21.52.178;
+> Podemos verificar que esta é a mesma função feita pelo nosso
+> browser e pela ferramenta: Decimal to IP Converter;
+> https://codebeautify.org/decimal-to-ip-converter
+> Essa conversão é feita basicamente e resumidamente
+> seguindo essa fórmula: 16777216*x + 65536*y + 256*z + 1*j
+> x = primeiro byte; y = segundo; z = terceiro; j = quarto.
+> ficando: 16777216*65 + 65536*21 + 256*52 + 1*178
+
+Muito bem observado.
+
+E note que 65536 = 256^2 e 16777216 = 256^3, ou seja, expressar um
+número inteiro em bytes é o mesmo que usar base duzentos e cinquenta e
+seis. É como se olhássemos para um endereço ip como 65.21.52.178 como
+se fosse um número com apenas quatro dígitos. Faz sentido?
+
+> Temos, assim, uma nova saída:
+> antartida.xyz has address http://18097365458982614194
+> -> nesse novo endereço não temos nada.
+> E nem chega a ser lido/reconhecido.
+> Isso ocorre porque está como long
+
+É fato. Curiosidade: o Firefox ignora os bytes mais significativos
+desse número de 8 bytes e fica apenas com os 4 bytes menos
+significativos --- portanto, no Firefox, esse endereço aí também te
+leva a antartida.xyz.
+
+> -Engraçado que a cada vez que o novo antartida é executado,
+> o resultado do endereço de saída muda>
+> Uma delas foi: http://2747369496625099954
+> E outra foi: http://6023332505746486450
+> ... Mas todos eles sempre são convertidos no mesmo valor:
+> o IP 65.21.52.0, que não é o IP certo que colocamos,já
+> que no último byte analisado está como zero e não 178.
+> Ou seja, vemos que o long não é capaz de armazenar em
+> decimal todas as caracteres de um ip 4 bytes.
+
+Opa. Quem pode mais pode menos. Com 8 bytes você consegue armazenar
+algo que só precisa de 4 bytes.
+
+O número sempre muda porque cada vez que você roda o programa, os
+bytes que estão ao lado dos seus bytes 178, 52, 21 e 65 mudam. Sempre
+tem alguma coisa escrita na memória. (Mas se você observar o unsigned
+long em hexadecimal, verá que os bytes menos significativos nunca
+mudam e são sempre os mesmos daqueles que estão no unsigned int.)

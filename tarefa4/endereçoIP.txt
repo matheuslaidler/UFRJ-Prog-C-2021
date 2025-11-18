@@ -1,0 +1,85 @@
+Menu principal
+CMT1-CMT012-14733-Introd. à programação C
+Terças e quintas 8h--10h
+Tarefa 4: endereços-IP
+Daniel Bastos
+•
+14 de dez. de 2021 Editado às 24 de dez. de 2021
+100/100
+100 pontos de 100 possíveis
+Data de entrega: 20 de dez. de 2021 18:00
+Caros estudantes, esta tarefa está diretamente associada a aula sobre ponteiros e endianness.
+
+Tarefa 4: endereços-IP
+(*) Introdução
+
+Essa tarefa está diretamente associada a 
+
+  http://c.antartida.xyz/pkg/pointers-0.1.tar.gz
+
+e a aula-escrita em addresses.txt.  Certifique-se que você estudou a
+aula, assistiu a aula antes de se aventurar por aqui.
+
+(*) Tarefa 4: endereços IP
+
+IP significa ``Internet Protocol''.  É o nome do protocolo de
+roteamento de redes como a Internet.  Numa rede-IP, a cada computador
+um número de 32 bits é associado.  Por exemplo, um computador na
+Internet poderia ter sido associado ao número 1 ou 2 ou 16909060.
+Qualquer número entre 0 e 2^32 - 1 bits serve.  Suponha que um certo
+computador na Internet tenha sido associado ao número 16909060.  O que
+se diz então é que esse computador tem endereço-IP 1.2.3.4.
+
+Já sabemos que o número 16909060 é escrito na memória de um
+computador-little-endian como [04][03][02][01], sendo que cada grupo
+de colchetes representa um byte.  Isso implica, portanto, que a
+notação de endereços-IP é big-endian.  De fato, o que é chamado de
+``network byte order'' --- a convenção de que ordem usar quando dados
+são transmitidos via rede --- é, por definição, big-endian.
+
+Há um certo computador na Internet cujo endereço é
+
+  65.21.52.178
+
+Que número inteiro é esse?  Para responder a essa pergunta, observe o
+programa antartida.c.  Como seu computador é little-endian, você
+precisa escrever no array /bs/ os bytes 65, 21, 52 e 178 na ordem
+little-endian.  Faça isso; compile e rode o programa.  Um endereço web
+com o número lhe será dado.  Qual foi o número?  Copie o endereço web
+e cole no seu navegador.  O que seu navegador diz?
+
+Redija uma apresentação do programa antartida.c.  Explique o código do
+programa.  Diga, em detalhes, o que ele faz e como ele faz.
+
+Agora rode novamente o sizes.exe.  Diga em sua redação qual é o
+tamanho de um /long/ no seu computador.  Diga qual é o tamanho de um
+/int/ no seu computador.  Agora troque o tipo do ponteiro p de
+/unsigned int */ para /unsigned long */.  (Você vai ter que mudar o
+especificador de conversão em printf de %u para %lu, ou seja, de
+/unsigned int/ para /unsigned long/.) Recompile o antartida.c.  Qual é
+o endereço web que você recebeu agora?  Houve mudança?  Por quê?
+Explique o resultado fazendo referência ao que ocorre na memória do
+seu computador.
+
+Se estiver com dificuldade de *explicar*, considere o programa
+to-hex.c.  
+
+--8<---------------cut here---------------start------------->8---
+#include <stdio.h>
+
+int main() {
+  int a = 1091908786;
+  printf("%x\n", a);
+
+  unsigned long x = 0UL; /* o número que você obteve */
+  printf("%lx\n", x);
+}
+--8<---------------cut here---------------end--------------->8---
+
+Em ``unsigned long x = 0UL'', coloque o número que você obteve ao
+trocar p de /int */ para /long */.  (Observe a nova sintaxe ``UL''.
+Isso instrui o compilador que a constante que você digita ali deve ser
+vista como um ``unsigned long''.)  Recompile o programa to-hex.c e
+execute-o.  Observe o resultado.  Compreende o que ocorre?
+ip-addresses.txt
+Exibindo ip-addresses.txt.Entregando…

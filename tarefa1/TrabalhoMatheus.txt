@@ -1,0 +1,128 @@
+Matheus Laidler
+matheuslaidler@ufrj.br
+matheuslaidler@gmail.com
+
+(*) Introdução
+
+ Certa empresa colocou regras específicas para identificação de
+relatórios para organização geral. Uma delas era sobre numerá-los
+por dez sessões diferentes apresentadas, assim ficaria mais 
+organizado e daria para controlar a quantidade por sessões.
+Ao catalogar os relatórios com os digitos, um pequeno banco de
+dados poderia ser feito com cada número referente a cada sessão
+com seus respectivos relatórios. Ou seja, se a sessão '0' for
+referente à sessão de RH da empresa, todos os relatórios de RH
+estarão alocados somente naquela região.
+ 
+ O programa que estudamos aqui serve para contar 
+esses números de dígitos contidas num arquivo-texto qualquer.
+Ele também identificará os outros tipos de caracteres.
+
+Antes de começar, precisamos definir o que é um 'dígito'.
+Sendo esta nossa versão 0.1, começaremos com uma definição de 
+implementação fácil.
+Definição: 
+Consideraremos como um /dígito/ qualquer caracter do teclado numérico.
+
+
+(*) Como usar o programa
+
+Usamos o programa da forma típica UNIX, ou seja, usando o /shell/ para
+preparar a entrada do programa.  Por exemplo,
+
+%./count-digits < /etc/services
+digits = 174 193 121 138 125 122 127 93 64 83, white space = 2444, other = 9282
+
+Outra possibilidade é encanar texto à entrada padrão do count-digits:
+
+%echo '12389473921874 ! @ banana' | ./count-digits 
+digits = 0 2 2 2 2 0 0 2 2 2, white space = 4, other = 8
+
+
+(*) Entendendo o funcionamento
+
+O programa começa criando uma lista com os dígitos do nosso teclado,
+ou seja, um awway que contenha os 10 elementos que vão de 0 à 9.
+Ele vai servir basicamte como um banco de dados pro nosso programa.
+A ideia do programa é fazer ele comparar cada caracter do texto com
+cada elemento da lista para comparar quais são iguais e contá-los.
+A sua saída mostra as vezes que esses dígitos apareceram na ordem 
+dos nossos 10 elementos (0,1,...9). Ou seja, se aparecer o '0' duas
+vezes e do '1' em diante aparecer uma, o resultado ficará:
+2 1 1 1 1 1 1 1 1 1
+
+
+A parte do cógido que nos fornece as variáveis, entre elas a lista:
+
+int main(void) {
+  int c, nwhite, nother;
+  int ndigit[10]; /* 0, 1, 2, 3, 4, ..., 9 */
+
+
+A parte do código que precisa determinar o índice 0 e o loop que 
+nos permite passar por cada elemento da lista:
+
+nwhite = nother = 0;
+  for (int i = 0; i < 10; ++i)
+    ndigit[i] = 0;
+    
+
+A parte do código que faz a contagem, própriamente dito:
+Usando um loop com condicional. Assim ele pode determinar que sempre
+que o índice for igual ou maior que 0 e menor ou igual a 9 irá contar
+no elemento respectivo ao número. 
+
+while ((c = getchar()) != EOF) {
+    if (c >= '0' && c <= '9')
+      ++ndigit[c - '0'];
+    else if (c == ' ' || c == '\n' || c == '\t')
+      ++nwhite;
+    else 
+      ++nother;
+
+Em outras palavras, ele está pegando o valor das caracteres e comparando.
+É como se ele tivesse assim antes de qualquer comparação:
+digits= 0 0 0 0 0 0 0 0 0 0, white space = 0, other = 0
+A cada pulo de linha, espaço e coisas desse sentido, vai sendo adicionado
+um ao 'white space'. A cada caracter diferente de número e espaço já é
+colocado em 'other'. Cada dígito ele vai adicionando referente ao
+número encontrado, seguindo a ordem crescente. Tudo isso será colocado 
+certeiramente e printado ao usuário no final do código. 
+Para pegar o número total de caracteres usados, podemos somar o other
+com os números encontrados e teremos o total. Isso sem contas os espaços
+e quebras-de-linha.
+
+Como falamos, tudo isso falado será mostrado com o print assim:
+
+printf("digits =");
+  for (int i = 0; i < 10; ++i)
+    printf(" %d", ndigit[i]);
+  printf(", white space = %d, other = %d\n", nwhite, nother);
+
+Assim, quando o valor de i for algum dígito, ele será printado em sua
+posição da lista, e se forem outros caracteres, como letras ou espaços,
+serão printadas em seus respectivos lugares também.
+
+
+. Observação>
+Para o laço-while funcionar, precisamos colocar os parênteses em ``c =
+getchar()'' porque a precedência do operador ``='' é menor que a do
+operador ``!=''.  Sem eles, teríamos efetivamente
+
+  c = (getchar() != EOF)
+
+e assim os únicos ``caracteres'' que leríamos seriam o número 1 ou 0
+--- que seriam os resultados da comparação.  Como consequência,
+qualquer arquivo não vazio teria (incorretamente) 'outras caracteres' e
+zero dígitos, linhas e espaços.  Veja:
+
+%make count-digits
+gcc -Wall -c count-digits.c
+count-digits.c: In function ‘main’:
+count-digits.c:14:10: warning: suggest parentheses around assignment used as truth value [-Wparentheses]
+   14 |   while (c = getchar() != EOF) {
+      |          ^
+gcc -o count-digits count-digits.o
+
+%./count-digits < FILES
+digits = 0 0 0 0 0 0 0 0 0 0, white space = 0, other = 129

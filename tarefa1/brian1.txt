@@ -1,0 +1,344 @@
+Atividade Tarefa 1: Brian Kernighan 0.1 expandida
+(*) Tarefa ``Brian Kernighan 0.1''
+
+Faça o download do pacote brian-0.1.tar.gz.  Abra seu shell e peça ao
+wget pra cuidar disso pra você.
+
+--8<---------------cut here---------------start------------->8---
+%wget http://c.antartida.xyz/pkg/brian-0.1.tar.gz
+--2021-11-21 13:24:08--  http://c.antartida.xyz/pkg/brian-0.1.tar.gz
+Resolving c.antartida.xyz (c.antartida.xyz)... 65.21.52.178
+Connecting to c.antartida.xyz (c.antartida.xyz)|65.21.52.178|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 3888 (3.8K) [application/octet-stream]
+Saving to: ‘brian-0.1.tar.gz’
+
+[...]
+
+2021-11-21 13:24:08 (17.2 MB/s) - ‘brian-0.1.tar.gz’ saved [3888/3888]
+--8<---------------cut here---------------end--------------->8---
+
+Agora peça ao tar pra descompactá-lo.
+
+--8<---------------cut here---------------start------------->8---
+%tar zxvf brian-0.1.tar.gz
+brian-0.1/
+brian-0.1/copy1.c
+brian-0.1/copy2.c
+brian-0.1/count-c.c
+brian-0.1/count-digits.c
+brian-0.1/count-lines.c
+brian-0.1/count-words.c
+brian-0.1/eof.c
+brian-0.1/f2c-constants.c
+brian-0.1/f2c.c
+brian-0.1/FILES
+brian-0.1/Makefile
+brian-0.1/Makefile-conciso
+brian-0.1/quantos.c
+brian-0.1/redacao-count-words.txt
+brian-0.1/truques.c
+%
+--8<---------------cut here---------------end--------------->8---
+
+Agora entre no diretório e diga ``make'' a seu shell.
+
+--8<---------------cut here---------------start------------->8---
+%cd brian-0.1/
+%make
+gcc -c truques.c
+gcc -c quantos.c
+gcc -o truques truques.o quantos.o
+gcc -Wall -x c -g -std=c99 -pedantic-errors -c f2c.c
+gcc -o f2c f2c.o
+gcc -Wall -x c -g -std=c99 -pedantic-errors -c f2c-constants.c
+gcc -o f2c-constants f2c-constants.o
+gcc -Wall -x c -g -std=c99 -pedantic-errors -c copy1.c
+gcc -o copy1 copy1.o
+gcc -Wall -x c -g -std=c99 -pedantic-errors -c copy2.c
+gcc -o copy2 copy2.o
+gcc -Wall -x c -g -std=c99 -pedantic-errors -c count-c.c
+gcc -o count-c count-c.o
+gcc -Wall -x c -g -std=c99 -pedantic-errors -c count-lines.c
+gcc -o count-lines count-lines.o
+gcc -Wall -x c -g -std=c99 -pedantic-errors -c count-words.c
+gcc -o count-words count-words.o
+gcc -Wall -x c -g -std=c99 -pedantic-errors -c count-digits.c
+gcc -o count-digits count-digits.o
+%
+--8<---------------cut here---------------end--------------->8---
+
+Maravilha.
+
+(*) Uma excursão sobre o make
+
+Abra o Makefile usando seu editor de textos --- por exemplo, subl
+Makefile.  (O Makefile em si é um programa, o que faz do programa
+/make/ uma linguagem de programação.)  A estratégia que expressamos
+nesse Makefile é como compilar nossos programas e quando recompilar.
+
+Diga ``man make'' e leia o primeiro parágrafo da descrição, que
+exibimos aqui.
+
+--8<---------------cut here---------------start------------->8---
+DESCRIPTION
+
+       The make utility will determine automatically which pieces of a
+       large program need to be recompiled, and issue the commands to
+       recompile them.  The manual describes the GNU implementation of
+       make, which was written by Richard Stallman and Roland McGrath,
+       and is currently maintained by Paul Smith.  Our examples show C
+       programs, since they are very common, but you can use make with
+       any programming language whose compiler can be run with a shell
+       command.  In fact, make is not limited to programs.  You can
+       use it to describe any task where some files must be updated
+       automatically from others whenever the others change.
+--8<---------------cut here---------------end--------------->8---
+
+O programa determina automaticamente que partes de um programa grande
+precisariam ser recompiladas.  Por isso, o Makefile descreve as
+relações de dependências pra que o make possa saber o que fazer e como
+produzir um executável a partir de suas partes, isto é, a partir de
+suas dependências --- como é o caso do programa truques.exe, que é
+composto de truques.o e quantos.o.  
+
+Num trecho como
+
+--8<---------------cut here---------------start------------->8---
+truques: truques.o quantos.o
+	gcc -o truques truques.o quantos.o
+--8<---------------cut here---------------end--------------->8---
+
+estamos dizendo que truques.exe depende de truques.o e quantos.o.
+
+Podemos inventar o verbo ``depende-de'' e atribuir a esse verbo o
+símbolo ``:''.  Assim, quando estivermos lendo um Makefile que diz
+``truques: truques.o quantos.o'', em nossa mente teremos a frase
+``truques depende-de truques.o e quantos.o''.  (Os símbolos que vemos
+no ``papel'' é chamado de ``sintaxe''.  O que acontece na nossa mente
+ao ver a sintaxe é chamado de ``semântica''.)
+
+Já a linha ``gcc -o truques truques.o quantos.o'' é apenas o comando
+pra montar o executável truques.exe.  Importante a notar é que o
+comando é especificado sempre após um TAB.  (Isso é imposto pelo
+make.)  Experimente trocar o TAB por espaços, por exemplo.
+
+--8<---------------cut here---------------start------------->8---
+truques: truques.o quantos.o
+         gcc -o truques truques.o quantos.o
+--8<---------------cut here---------------end--------------->8---
+
+Visualmente não há diferença, mas este último trecho acima contém
+apenas espaços e não um TAB.  O make agora reclama:
+
+--8<---------------cut here---------------start------------->8---
+%make truques
+Makefile:8: *** missing separator.  Stop.
+--8<---------------cut here---------------end--------------->8---
+
+O make chama o TAB de um operador.  O operador TAB ordena o make a
+executar um comando shell.
+
+Pra diferenciar um TAB de um espaço normal, seu editor de texto pode
+ajudar.  O Sublime, por exemplo, exibe um caractere diferente para
+espaço e TAB se você selecionar um trecho de texto usando o mouse ou o
+teclado --- shift-left, shift-right, shift-up, shift-down.
+
+Okay.  Capítulo encerrado.
+
+Diga ``make clean'' a seu shell.  Ele faz uma limpeza: remove
+quaisquer executáveis, object-code entre outros arquivos que sabemos
+como reproduzir quando for preciso.  Perceba que neste caso usamos o
+``make'' meramente como uma forma mais rápida de dar um comando ao
+shell, ou seja, o make também é útil dessa forma.
+
+Agora diga ``make truques.exe''
+
+--8<---------------cut here---------------start------------->8---
+%make truques.exe
+make: *** No rule to make target 'truques.exe'.  Stop.
+%
+--8<---------------cut here---------------end--------------->8---
+
+Sem regras para fazer truques.exe.  De fato, seu Makefile não usa a
+extensão ``exe''.  A regra se chama ``truques'' e não ``truques.exe''.
+Você poderia chamá-la de ``truques.exe'', mas o compilador conhece seu
+sistema a fundo e, estando no Windows, ele sabe que precisará colocar
+a extensão ``exe''.  Alguns estudantes não usam Windows: preparamos um
+Makefile que funciona igual em múltiplos sistemas.
+
+%make truques
+gcc -c truques.c
+gcc -c quantos.c
+gcc -o truques truques.o quantos.o
+
+%./truques.exe
+Tenho 12 truques na manga.
+
+%./truques
+Tenho 12 truques na manga.
+%
+
+Note que não existe arquivo ``truques'' no seu sistema de arquivos,
+mas, como estamos numa simulação UNIX, nosso sistema entende que
+``./truques'' significa executar o ``truques.exe''.
+
+Uma forma de provar que dois nomes apontam para o mesmo arquivo é:
+
+%ls -li truques.exe
+53480245575272233 -rwxr-xr-x 1 x 56897 Nov 21 11:43 truques.exe
+
+%ls -li truques
+53480245575272233 -rwxr-xr-x 1 x 56897 Nov 21 11:43 truques
+
+A opção -i exibe o ``inode'' do arquivo no sistema de arquivos.  O
+inode representa o índice do arquivo no sistema de arquivos.  Se dois
+nomes têm o mesmo inode, eles são o mesmo arquivo.
+
+Agora diga ``make clean'' e compile truques e count-c.
+
+%make truques
+gcc -c truques.c
+gcc -c quantos.c
+gcc -o truques truques.o quantos.o
+
+%make count-c
+gcc -Wall -x c -g -std=c99 -pedantic-errors -c count-c.c
+gcc -o count-c count-c.o
+%
+
+A compilação aí é diferente.  Estamos usando uma variável chamada
+CFLAGS --- veja seu Makefile.  O make lhe permite usar variáveis, o
+que nos economiza bastante digitação.  (Repare que nem aspas usamos ao
+definir essa variável --- é uma variável do make e, portanto, é ele
+quem diz as regras de como se escreve.  Você encontra o manual do make
+em https://bit.ly/3x84Sbz --- variáveis, página 61 [página 73 do
+PDF].)
+
+(*) Use e leia os programas de Brian Kernighan
+
+Leia os seguintes programas na ordem count-c.c, count-lines.c,
+count-words.c e, por último, count-digits.c.
+
+Por exemplo, o count-c.c conta quantos caracteres existem num arquivo.
+
+%./count-c.exe < /etc/services
+17463
+%
+
+Há mais de dezessete mil ``caracteres'' nesse arquivo.  (Em quase
+todos os sistemas que você encontrará hoje um caractere é sempre um
+byte.)
+
+Na implementação desses programas, Brian Kernighan está pouco a pouco
+implementado um famoso programa UNIX chamado wc --- /word count/.  Por
+exemplo, em
+
+%wc /etc/services
+  285  1237 17463 /etc/services
+
+podemos ver que /etc/services contém 285 linhas, 1237 palavras (pra
+alguma definição de ``palavra'') e 17463 caracteres.  (O manual do wc
+dá a definição de palavra que o wc usa.)
+
+(*) O programa count-digits.c
+
+O programa produz uma distribuição de frequências de certos
+caracteres.  Por exemplo, 
+
+%./count-digits.exe < /etc/services
+digits = 82 152 120 144 91 132 71 82 50 64, white space = 8715, other = 7760
+
+O programa reporta que no arquivo /etc/services o caractere '0'
+aparece 82 vezes, o '1' aparece 152 vezes et cetera.
+
+(*) Redação sobre count-digits.c
+
+Redija um texto que apresente o que o programa count-digits.c faz e
+que explique sua implementação.  Seu texto deve ensinar a alguém no
+seu nível de conhecimento a ler e compreender o programa com pouco
+esforço mental.  Você não precisa respeitar a ordem do código-fonte.
+Você poderia começar pelo meio ou pelo fim, se quiser.  (Na maioria
+das vezes a ordem que o compilador precisa ler o código não é a melhor
+ordem para se apresentar a alguém.  Não somos compiladores.)
+
+Antes de redigir, entenda o programa e o seu código.  Sempre que
+preciso, faça pequenas modificações no programa e observe suas
+modificações como uma forma de confirmar seu entendimento.
+
+Você pode buscar ajuda com o próprio ``Brian Kernighan'', isto é, se
+você tiver o livro.  Ele explica o programa no livro.  Sempre
+discutiremos os programas em sala de aula também.
+
+(*) Um exemplo
+
+Pra lhe oferecer um exemplo, fiz uma redação sobre o count-words.c,
+que é um programa mais simples que o count-digits.c.  Você encontra
+minha redação em recacao-count-words.txt.
+
+É difícil entender o código de um programa que nunca usamos ou que não
+sabemos pra que serve.  Por isso, é uma boa ideia introduzir o assunto
+antes de qualquer coisa; prepare o leitor para o que virá.  Mostre ao
+leitor como se usa o programa et cetera.
+
+A redação está repartida em seções, como tipicamente se faz num artigo
+de pesquisa --- por exemplo, https://bit.ly/3qXSMAQ.  É uma boa ideia
+usá-las.  As seções organizam o seu documento e ainda lhe proporcionam
+mudar de assunto repentinamente.
+
+No count-words.c, exibo o trecho de código relativo ao trecho
+principal do programa, que é o laço-while.  A estratégia envolve
+detectar quando estamos lendo uma palavra e quando não estamos.
+
+Explicado o programa, adiciono novas seções que são tangentes ao tema
+principal.  Sempre que alguma coisa lhe interessar, você pode abrir
+tangentes e dissertar sobre elas.  Armadilhas em que você caiu ao
+escrever ou estudar um programa são boas razões pra se inserir na
+redação.  Por exemplo, sempre que suas investigações corrigem a
+intuição prévia que você tinha a respeito da linguagem, do sistema, do
+compilador, você tem boas razões para documentá-las.  Lembre-se de que
+quem mais lê seus programas e sua documentação de programas é você
+mesmo, você mesma.
+
+No count-digits.c, por exemplo, note que ndigit é um array de 10
+elementos.  É a primeira vez que estamos vendo um array.  Note que há
+comparação entre o inteiro c e o caractere '0' bem como '9'.  Pode a
+linguagem C comparar caractere com inteiros?  Pode porque um
+caractere é sempre um pequeno número inteiro.  (Não existem de fato
+caracteres.  Escrever '0' é meramente sintaxe para o número 48.)  Isso
+explica parte do que ocorre no /statement/
+
+  ++ndigit[c - '0'];
+
+Qual é a função exata desse /statement/?  
+
+Se caracteres são inteiros, por que não declaramos ``char c'' em vez
+de ``int c''?  O procedimento getchar() ora retorna um caractere, ora
+retorna uma ``condição de erro'' como EOF.  Precisamos ter uma forma
+de distinguir o que é erro e o que é caractere.  (A linguagem C não
+suporta exceções, retorno de múltiplos valores ou outras formas de
+comunicação sofisticadas.  A vida é simples por aqui.)
+
+(*) Sugestões de configurações para o Sublime
+
+As sugestões se aplicam tanto a código-fonte quanto a texto.
+
+{
+  // "font_size": 15,
+  "translate_tabs_to_spaces": true,
+  "rulers": [72, 80],
+}
+
+Traduzir tabs para espaço evita misturar tabs e espaço em código-fonte
+e em texto de uma forma geral, o que simplifica.  Régua na coluna 72
+lhe mostra quando suas linhas estão grandes demais.  (É uma lista de
+réguas.  Você pode especificar mais uma ou só uma.)  (Nem sempre é
+possível manter linhas curtas --- um endereço web muito grande, por
+exemplo.)  
+
+Quando você edita um parágrafo, você deve pressionar Alt-Q para o
+Sublime ``preenchê-lo''.  Preencher um parágrafo significa alinhá-lo
+ao tamanho desejado de colunas, bem como concatenar frases que ficaram
+quebradas em múltiplas linhas.  (Experimente-o pra entender o efeito.)
+brian-0.1.txt
+Exibindo brian-0.1.txt.Entregando…

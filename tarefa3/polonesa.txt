@@ -1,0 +1,233 @@
+Atividade Tarefa 3: Jan Lucasiewicz 0.1 expandida
+(*) Tarefa ``Jan Lucasiewicz 0.1''
+
+Copie o pacote 
+
+  http://c.antartida.xyz/pkg/polonesa-0.1.tar.gz
+
+pra você, ou seja, diga a seu shell, como de costume:
+
+%wget http://c.antartida.xyz/pkg/polonesa-0.1.tar.gz
+[...]
+%tar zxvf polonesa-0.1.tar.gz
+polonesa-0.1/
+polonesa-0.1/getch.c
+polonesa-0.1/getop.c
+polonesa-0.1/main-without-switch.c
+polonesa-0.1/main.c
+polonesa-0.1/Makefile
+polonesa-0.1/polonesa.h
+polonesa-0.1/stack.c
+polonesa-0.1/switch.c
+%cd polonesa-0.1/
+
+(*) A propósito
+
+Os arquivos
+
+  main-without-switch.c 
+  switch.c
+
+não fazem parte do polonesa.exe, que é uma calculadora, mas são úteis
+pra você entender o efeito do uso de um switch-statatement da linguagem C.
+
+(*) Compile
+
+Compile o programa.  O aviso do compilador é inofensivo.  (Ignore-o.)
+
+%make
+cc -Wall -x c -g -std=c99 -pedantic-errors   -c -o main.o main.c
+cc -Wall -x c -g -std=c99 -pedantic-errors   -c -o getop.o getop.c
+In file included from getop.c:2:
+getop.c: In function ‘getop’:
+getop.c:19:27: warning: array subscript has type ‘char’ [-Wchar-subscripts]
+   19 |     while (isdigit(s[++i] = c = getch()))
+      |                    ~~~~~~~^~~~~~~~~~~~~
+cc -Wall -x c -g -std=c99 -pedantic-errors   -c -o stack.o stack.c
+cc -Wall -x c -g -std=c99 -pedantic-errors   -c -o getch.o getch.c
+gcc -o polonesa.exe main.o getop.o stack.o getch.o
+%
+
+(*) A calculadora, uma introdução
+
+A notação polonesa reversa é melhor compreendida com exemplos.  Por
+exemplo, enquanto no dia a dia usamos expressões como 
+
+  1 + 1
+
+cuja notação aí é chamada de ``notação infixa''.  A chamada ``notação
+polonesa'', escreveria a expressão acima como
+
+  + 1 1
+
+Perceba que o operador vem antes dos argumentos.  Já a ``notação
+polonesa reversa'' escreveria
+
+  1 1 +
+
+Os argumentos vêm antes do operador.  Quem inventou a notação polonesa
+foi o matemático Jan Lucasiewicz.  (Podemos especular que o nome
+``notação polonesa'' foi adotado pra que ninguém tenha que pronunciar
+``notação de Lucasiewicz''.) :-)
+
+Encanando a saída padrão do /echo/ na entrada padrão do polonesa.exe,
+podemos fazer uma série de cálculos.
+
+%echo '1 1 +' | ./polonesa.exe
+        2
+%echo '2 2 +' | ./polonesa.exe
+        4
+%echo '2 5 *' | ./polonesa.exe
+        10
+%echo '10 2 /' | ./polonesa.exe
+        5
+
+(*) A pilha 
+
+A calculadora usa uma pilha como estrutura de dados.  Quando uma soma
+é feita, o resultado da soma é colocado na pilha e podemos usá-lo.
+Por exemplo, no comando abaixo computamos a soma de 1 com 1 e depois
+somamos mais 10.
+
+%echo '1 1 + 10 +' | ./polonesa.exe
+        12
+
+A soma de 1 com 1 dá 2 e, assim, o 2 é colocado no topo da pilha.  Em
+seguida, colocamos o número 10 na pilha --- logo acima do número 2
+---, daí quando o segundo operador '+' aparece, a soma computada é
+entre o 2 e o 10.  Por isso obtemos o resultado 12.
+
+Isso significa que quando o programa vê um número, ele coloca esse
+número no topo da pilha; quando vê uma operação, ele retira dois
+elementos da pilha, computa a operação envolvendo esses elementos e o
+resultado da operação é recolocado na pilha.
+
+Agora observe:
+
+%echo '1 1 1 + 10 +' | ./polonesa.exe
+        12
+%
+
+Cada operador só trabalha com dois argumentos.  Se você quiser somar
+os três números 1 que lá aparecem, precisará de duas operações de
+soma.
+
+%echo '1 1 1 + +' | ./polonesa.exe
+        3
+%
+
+Por quê?  Em sua redação, explique esses resultados descrevendo o que
+ocorre na pilha.  Por que o resultado abaixo é 14?
+
+%echo '2 3 4 + *' | ./polonesa.exe
+        14
+%
+
+(*) Usando a calculadora de forma interativa
+
+Para usá-la de forma interativa, como uma calculadora de mesa,
+execute-a e mantenha-a conectada a seu teclado.
+
+%./polonesa.exe
+2 3 4 + *
+        14
+
+O uso interativo da calculadora explica por que colocamos um \t sempre
+que imprimimos o topo da pilha: assim seus olhos conseguem distinguir
+o que foi digitado à calculadora e o que ela imprimiu.
+
+Agora diga ^D a seu shell, ou seja, pressione Ctrl+D no seu teclado.
+Seu terminal entende que isso é uma ordem para enviar EOF ao programa.
+O programa então termina.
+
+(*) As palavras-chave extern e static
+
+Vimos em aula a possibilidade de main.c ter acesso aos nomes definidos
+em stack.c.  Pra conseguir isso, adicionamos o qualificador /extern/
+aos nomes desejados.  Como isso é possível?  Como pode código escrito
+em main.c conseguir acessar nomes definidos em outros arquivos?
+
+O qualificador /static/, entretanto, impede que um nome seja usado por
+outros arquivos, ou seja, /static/ esconde esse nome do resto do
+código-fonte do programa.  Nesse caso, portanto, /static/ funciona
+como um impedimento ao uso de /extern/.  (Esse não é o único uso do
+qualificador /static/ em C.  Veremos outro uso em outra oportunidade.)
+
+(*) Sua redação
+
+Sua tarefa contém uma série perguntas --- já feitas e algumas que
+serão feitas ao decorrer deste documento.  Responda a todas essas
+perguntas em sua redação.
+
+Comece sua redação apresentando brevemente como usar a calculadora.
+(Como se usa esse negócio?)
+
+(/) A pilha
+
+Note que ``stack'' é palavra inglesa que significa ``pilha''.
+Explique --- em sua redação --- o que fazem os procedimentos push() e
+pop() em stack.c.  Explicada a função de um procedimento
+individualmente, exiba o código dele, incluindo os nomes externos
+definidos no topo do arquivo --- /sp/ e /val/.  Exibido o código,
+explique a implementação, mas explique por que push() usa o operador
+/++/ na direita de sp e pop() usa o operador /--/ na esquerda de sp.
+
+Dê exemplos.  
+
+Explique por que o nome ``pilha'' é dado à estrutura de dados
+implementada por esses procedimentos.
+
+(/) O mecanismo de /buffer/
+
+Explique o que fazem os procedimentos getch() e ungetch() definidos em
+getch.c.  O que faz cada um deles?  Exiba o código de cada
+procedimento e em seguida explique a implementação de cada um.
+
+Somos obrigados a usar um mecanismo de buffer nesse programa?  O que
+você acha?  (Você não precisa provar sua opinião.  Apenas defenda sua
+opinião.)
+
+(/) O procedimento /getop/
+
+Explique o que faz o procedimento getop().  Em seguida exiba cada
+trecho relevante do programa e explique sua implementação.  Por
+exemplo, o procedimento getop() faz 
+
+    s[1] = '\0'; 
+
+e mais próximo do fim faz 
+
+    s[i] = '\0';
+
+Por que isso está sendo feito ``meio que'' duas vezes?  Não podemos
+fechar a ``string'' no array /s/ uma vez só?
+
+Em que circunstâncias devemos fazer
+
+  ungetch(c)
+
+e por que fazemos?  Qual o objetivo?
+
+(/) O procedimento /main/
+
+Por último, explique o procedimento main().  O que faz o procedimento
+atoi()?  Como você conseguiu descobrir o que ele faz?  Por que na
+subtração (bem como na divisão) precisamos necessariamente fazer
+
+  op2 = pop();
+
+antes de passar a subtração para push()?  O que poderia acontecer se
+tivéssemos feito como na adição e multiplicação?
+
+(/) Revise seu trabalho e reflita
+
+Agora que você entendeu bem o programa, pergunte-se: seria melhor
+apresentar a implementação do programa começando pelo procedimento
+/main/ ou seria melhor manter a ordem especificada acima?  Por que?
+
+Não há certo nem errado na sua preferência.  Uma redação é um trabalho
+artístico, como escrever um drama ou uma novela.  O que é objetivo na
+sua redação é a linguagem C bem como as estratégias usadas em
+programas.
+polonesa-0.1.txt
+Exibindo polonesa-0.1.txt.Entregando…
