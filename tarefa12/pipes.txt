@@ -1,0 +1,117 @@
+Tarefa 12: UNIX pipes de Doug McIlroy e Ken Thompson
+(*) Objetivo 
+
+O objetivo desta aula é compreendermos os ``UNIX pipes''.
+
+(*) Introdução
+
+%wget http://c.antartida.xyz/pkg/mcilroy-thompson-0.1.tar.gz
+%tar zxvf mcilroy-thompson-0.1.tar.gz
+%cd mcilroy-thompson-0.1/
+
+Agora diga 
+
+  cat shell.c | less
+
+a seu shell.  Observe que o /cat/ é um programa que só faz escrever na
+saída padrão; já o /less/ lê a entrada padrão e cria esse paginador
+que já conhecemos.  Diga ``q'' ao /less/ pra terminá-lo.
+
+Como isso é possível?  Se o /cat/ imprime dados na saída padrão, como
+podem esses dados serem conectados à entrada padrão do /less/?  UNIX é
+quem faz isso acontecer e o operador desse fenômeno é o shell, afinal
+foi ao shell quem você entregou o comando.
+
+Vejamos como o shell pede ao sistema pra que isso aconteça.
+
+Compile o programa shell.c e rode-o.  Observe que ele faz algo
+parecido: ele usa o /cat/ pra ler o arquivo shell.c e usa o /less/ pra
+fazer a paginação.  São exatamente esses passos que o shell faz quando
+você pede ``cat shell.c | less''.
+
+(*) Outra aplicação
+
+A /system call fork/ duplica o processo, fazendo um processo filho
+nascer.  Observe o programa parent2child.c.  Ele usa um /pipe/ pra que
+o processo pai possa produzir dados a serem lidos pelo processo filho.
+Diferente do shell.c, o pai escreve ele mesmo os dados para o filho, o
+que lhe dá a oportunidade de chamar wait() quando acabar, sendo assim
+não precisamos de dois /forks/ como o shell precisa fazer.
+
+(*) Tarefa 1
+
+Estude o programa parent2child.c.  No processo pai, remova a chamada
+
+  close(pfd[1]);
+
+Recompile e execute o programa.  O que acontece?  Explique o que
+acontece em parágrafos.
+
+O que entregar?  Entregue seus parágrafos num arquivo-texto.
+
+(*) Tarefa 2
+
+Explique o que você acha que Doug McIlroy quer dizer com ``do one
+thing and do it well'' usando o exemplo de dizer a seu shell
+
+  cat shell.c | less
+
+como ilustração.
+
+O que entregar?  Entregue sua explicação num arquivo-texto.
+
+(*) Apêndice
+
+A ideia de ``UNIX pipes'' vem da programação funcional, na verdade.
+Em 1965, Peter Landin inventa os ``streams'' em ``A Correspondence
+Between ALGOL 60 and Church's Lambda-Notation: Part I''.
+
+    When [for-list-elements were] interpreted by the sharing machine
+    they would lead to an attempt to evaluate the entire [list] before
+    the first iteration of the loop. [...] We therefore consider
+    [for-list-elements] as denoting not lists but a particular kind of
+    function, called here as a /stream/, that is like a list but has
+    special properties related to the sequencing of evaluation.
+    Principally, the items of an intermediately resulting stream need
+    never exist simultaneously.  So streams might have practical
+    advantages when a list is subjected to a cascade of editing
+    processes.
+
+Em uma nota de rodapé, Peter Landin comenta que a ideia parece análoga
+às co-rotinas de Conway.  Melvin Conway, em 1963, publicou ``Design of
+a Separable Transition-Diagram Compiler''.
+
+    That property of the design which makes it amenable to many
+    segment configurations is its separability.  A program
+    organization is separable if it is broken up into processing
+    modules which communicate with each other according to the
+    following restrictions: (1) the only communication between modules
+    is in the form of discrete items of information; (2) the flow of
+    each of these items is along fixed, one-way paths; (3) the entire
+    program be laid out so that the input is at the left extreme, the
+    output is at the right extreme, and everywhere in between all
+    information items flowing between modules have a component of
+    motion to the right.
+
+Em 1964, Doug McIlroy, envolvido com a construção do primeiro sistema
+UNIX, deixou claro que a ideia estava também com ele.  Num rápido
+sumário a respeito do que seria mais importante para o sistema, ele
+adicionou como primeiro item da lista a necessidade de conectar
+programas como se assim o fizéssemos através de uma mangueira de
+jardim.  
+
+    We should have some ways of coupling programs like garden
+    hose-screw in another segment when it becomes necessary to massage
+    data in another way.  This is the way of IO also.  
+
+Ele assinou ``M. D. McIlroy, October 11, 1964.''  Ele se referia aos
+pipes de UNIX.  A história narrada pelo próprio McIlroy é que não foi
+fácil implementar a ideia.  Em 1973, Ken Thompson implementou pipes em
+seu sistema operacional e incrementou o shell do sistema para suportar
+a sintaxe tão famosa: programa1 | programa2.  Era o início da
+``filosofia UNIX''. Durante uma entrevista feita por Michael
+S. Mahoney em 1989, Doug McIlroy a descreveu:
+
+    This is the Unix philosophy.  Write programs that do one thing and
+    do it well.  Write programs to work together.  Write programs that
+    handle text streams, because that is a universal interface.

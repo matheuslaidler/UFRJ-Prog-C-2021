@@ -1,0 +1,35 @@
+A função fork é uma função que duplica o processo atual dentro do sistema operacional. 
+O processo que inicialmente chamou a função fork é chamado de processo pai. 
+O novo processo criado pela função fork é chamado de processo filho. 
+Todas as áreas do processo são duplicadas dentro do sistema operacional (código, dados, pilha, memória dinâmica).
+
+A função fork é chamada uma única vez (no pai) e retorna duas vezes (uma no processo pai e outra no processo filho). 
+O processo filho herda informações do processo pai:
+
+Usuários (user id) Real, efetivo.
+Grupos (group id) Real, efetivo.
+Variáveis de ambiente.
+Descritores de arquivos.
+Prioridade
+Todos os segmentos de memória compartilhada assinalados.
+Diretório corrente de trabalho.
+Diretório Raiz.
+Máscara de criação de arquivos.
+O processo filho possui as seguinte informações diferente do processo pai:
+
+PID único dentro do sistema.
+Um PPID diferente. (O PPID do processo filho é o PID do processo pai que inicialmente ativou a função fork).
+O conjunto de sinais pendentes para o processo é inicializado como estando vazio.
+Locks de processo, código e dados não são herdados pelo processo filho.
+Os valores da contabilização do processo obtida pela função time são inicializados com zero.
+Todos os sinais de tempo são desligados.
+Caso a função fork retorne 0 (zero), está se executando o processo filho. 
+Caso a função retorne um valor diferente de 0 (zero), mas positivo, o processo pai está sendo executado. 
+O valor retornado representa o PID do processo filho criado.
+A função retorna -1 em caso de erro (provavelmente devido a se ter atingido o limite máximo de processos por usuário configurado no sistema).
+
+
+$> gcc fork.c -o fork
+$> ./fork
+        Process[0] - ID do Processo: 201
+        Process[1] - ID do Processo: 202

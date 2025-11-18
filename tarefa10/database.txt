@@ -1,0 +1,8 @@
+22/06/1986           Copa do Mundo de 1986, La mano de Dios.  El Diablo, Don Diego Armando Maradona.
+01/01/1970           The UNIX Epoch.
+not/a/valid/date     Desculpe. Sou uma base de dados imperfeita.
+3/9/1752             Um dia que nunca existiu na Inglaterra.
+06/12/1970           Lançamento de ``Love Story (1970).''
+5/5/2022          
+11/12/1950           ``What Desires Are Politically Important?'' por Bertrand Russell.
+Teste de escrita: Melhor introdução a programação C/C++ por Daniel Bastos! - (URFJ)

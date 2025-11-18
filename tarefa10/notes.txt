@@ -1,0 +1,39 @@
+Vamos fazer o arquivo funcionar no "database.txt" da ultima tarefa.
+
+
+Programa open:
+
+testado com open(arquivo, O_RDWR | O_CREAT)
+Podemos visualizar que enquanto o programa está em ação, isto é, ainda no timming do sleep(60), a ação de escrever a string já foi feita com sucesso.
+Foi feita, inclusive, sem sobrescrever o arquivo todo. Ela foi apenas adicionada ao final do arquivo em uma nova linha.
+(Isso usando o write para escrever)
+
+
+Programa fopen:
+
+Enquanto o programa está no SLEEP, nada ainda foi escrito realmente, apenas após a finalização.
+É interessante comentar tbm que da forma que fizemos (w+) ele apaga tudo q estava no arquivo antes e escreve o que pedimos, então alterei para 'a+' para ter mais haver com a saida do outro programa q desenvolvemos.
+Então, durante a execução do sleep, o "database", da aula passada, estava vazio e após o término do programa, ficou apenas a string que indicamos.
+Se terminarmos o programa com ctrl-c a escrita não é finalizada, até porque ele interrompe o funcionamento do arquivo para finalizá-lo, e o programa só conclui a ação após os 60 segundos.
+Se colocarmos o 'fclose' antes do sleep, o resultado muda e a escrita ocorre de 'imediato' tal qual o outro programa com 'open'.
+(Dps fiz o programa add o texto no final sem sobrescrever o arquivo com o a+ para entendermos melhor a comparação tendo q ter o mesmo resultado)
+-Isso tudo foi testando com o fwrite. Agora, com o fprintf: Não teve nenhuma mudança, obviamente o resultado seguiu sendo o mesmo.
+(Colocando 'a+'' no fopen ficamos com o arquivo intácto, porém com a adição da string ao final, já com o w+ ele apaga o conteúdo caso o arquivo exista)
+
+
+
+Analisando a diferença da execução dos dois programas:
+
+A diferença do fopen.exe pro open.exe que montei foi, essencialmente, apenas a hora em que a edição do arquivo foi feita.
+Em outras palavras, enquanto o "open" fez a manipulação do arquivo em tempo real, sem precisar esperar pelo close,
+o fopen precisou esperar os 60 segundos do sleep até chegar em fclose para termos o resultado da função do programa em si.
+Se o sleep(60) viesse depois, o resultado seria o mesmo de close.exe; Até porque, se mandamos o sistema botar o programa
+para "dormir" no meio de sua execução, ele irá terminar apenas quando voltar as atividades, diferentemente de quando faz
+uma chamada pro sistema e pede a ele para escrever e apenas depois para fazer ele "dormir". Nesse caso o programa estará
+apenas deixando pra fechar e finalizar o programa depois, mas a função da escrita já foi feita pelo sistema no momento da
+execução. (Ao menos esse foi meu entendimento diante dos testes, posso estar completamente enganado por estar aprendendo)
+
+
+
+
+

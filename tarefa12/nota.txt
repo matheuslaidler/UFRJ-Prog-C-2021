@@ -1,0 +1,3 @@
+na aula praticamente tem a primeira tarefa
+a segunda não é complicada.
+Vamos usar o q sabemos de pipe em linux e rever a explicação da aula com o desenho e redijir sobre

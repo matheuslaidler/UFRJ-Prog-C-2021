@@ -1,0 +1,771 @@
+(*) O objetivo
+
+Um dos objetivos desta aula é lhe mostrar que um procedimento C é algo
+bem diferente de um procedimento C que invoca o sistema operacional.
+Um procedimento que invoca o sistema faz uso de instruções de máquina
+específicas do /hardware/ em uso e, portanto, não poderia ser um
+procedimento portável (para outras máquinas).  Como a linguagem C tem
+como forte objetivo ser facilmente portável para máquinas muito
+diversas e atípicas, ela não se envolve com detalhes íntimos do
+/hardware/.  Outro objetivo é iniciarmos um passeio pelos serviços
+oferecidos pelo sistema operacional.
+
+(*) A diferença entre /library functions/ e /system calls/
+
+Uma razão pra não se incluir entrada e saída numa linguagem de
+programação que se propõe a produzir código diretamente para uma
+máquina física é que interagir com dispositivos de entrada e saída ---
+como terminais (isto é, teclado e monitor), sistemas de arquivos, rede
+et cetera --- significa interagir com muitas máquinas diferentes uma
+das outras.  Há muitos fabricantes, muitos modelos de dispositivos.
+Fazer uma linguagem suportar cada uma dessas máquinas é totalmente
+irreal.
+
+Um sistema operacional típico é quem é responsável por conversar
+diretamente com a máquina física.  De fato, nesses sistemas, é
+essencialmente impossível rodar um programa que possa falar
+diretamente com a máquina física, como falar diretamente com seu
+dispositivo de rede.  (Há exceções.  Em sistemas Windows, por exemplo,
+é tecnicamente possível um processo privilegiado acessar diretamente a
+memória física de um computador, mas esse tipo de programa é
+certamente atípico.)
+
+A própria atividade de executar um programa requer solicitar o serviço
+ao sistema.  Escrever dados na tela do computador requer passar dados
+pra fora do programa que produz os dados, o que exige entrada-e-saída
+e, logo, precisamos do sistema (operacional).  Isso implica que
+
+  printf("hello, world"\n);
+
+precisa eventualmente chamar o sistema pra terminar seu trabalho.  A
+chamada ao sistema que /printf/ eventualmente usa é /write/.  Embora
+/write/ seja um procedimento C, não é um procedimento C puro.  Tem que
+haver alguma coisa especial em /write/ que seja capaz de interromper
+seu programa e passar o controle do CPU de volta para o sistema
+(operacional) --- pra que o trabalho de /write/ possa ser realizado.
+
+Então /printf/ é um procedimento C puro porque não é /printf/ quem
+chama o sistema.  Dizemos então que /printf/ é uma /library function/.
+Assumindo que /write/ chama de fato o sistema diretamente, dizemos
+então que /write/ é uma /system call/.
+
+Lembremos que a documentação de /write/ informa que sua assinatura é
+
+--8<---------------cut here---------------start------------->8---
+  int n_written = write(int fd, char *buf, int n).
+--8<---------------cut here---------------end--------------->8---
+
+e é assim que a utilizamos em C.  Vejamos agora a instrução de máquina
+executada por procedimentos como esse num sistema específico --- um
+OpenBSD 7.0 --- o comando ``uname'' revela o sistema.
+
+--8<---------------cut here---------------start------------->8---
+%uname -a
+OpenBSD cristina.local 7.0 GENERIC.MP#232 amd64
+--8<---------------cut here---------------end--------------->8---
+
+A cada /system call/ um número é atribuído.  Num OpenBSD, por exemplo,
+/write/ recebe o número 4, o que pode ser visto no arquivo
+
+  /usr/include/sys/syscall.h
+
+do sistema OpenBSD:
+
+--8<---------------cut here---------------start------------->8---
+/* syscall: "write" ret: "ssize_t" args: "int" "const void *" "size_t" */
+#define SYS_write       4
+--8<---------------cut here---------------end--------------->8---
+
+O código-fonte do procedimento C a gente encontra em
+
+  /usr/src/lib/libc/sys/w_write.c
+
+--8<---------------cut here---------------start------------->8---
+#include <unistd.h>
+#include "cancel.h"
+
+ssize_t
+write(int fd, const void *buf, size_t nbytes)
+{
+	ssize_t ret;
+
+	ENTER_CANCEL_POINT(1);
+	ret = HIDDEN(write)(fd, buf, nbytes);
+	LEAVE_CANCEL_POINT(ret <= 0);
+	return (ret);
+}
+DEF_CANCEL(write);
+--8<---------------cut here---------------end--------------->8---
+
+Fica claro a partir daí que a invocação do sistema será feita pela
+macro HIDDEN.  A macro HIDDEN é definida em
+
+  /lib/libc/include/namespace.h
+
+--8<---------------cut here---------------start------------->8---
+#define	HIDDEN(x)		_libc_##x
+--8<---------------cut here---------------end--------------->8---
+
+Assim, o procedimento acima é na verdade
+
+--8<---------------cut here---------------start------------->8---
+#include <unistd.h>
+#include "cancel.h"
+
+ssize_t
+write(int fd, const void *buf, size_t nbytes)
+{
+	ssize_t ret;
+
+	ENTER_CANCEL_POINT(1);
+	ret = _libc_write(fd, buf, nbytes);
+	LEAVE_CANCEL_POINT(ret <= 0);
+	return (ret);
+}
+DEF_CANCEL(write);
+--8<---------------cut here---------------end--------------->8---
+
+Compilando a biblioteca e fazendo o disassembly dos /object files/
+gerados, a gente encontra /_libc_write/ em /write.o/ --- usando o
+programa /nm/ que estudamos nas primeiras aulas do curso:
+
+--8<---------------cut here---------------start------------->8---
+%nm write.o
+00000000 T _libc_write
+00000000 T _thread_sys_write
+%
+--8<---------------cut here---------------end--------------->8---
+
+O disassembly a gente faz com o /objdump/:
+
+--8<---------------cut here---------------start------------->8---
+%objdump -d write.o
+[...]
+0000000000000000 <_libc_write>:
+   0:   b8 04 00 00 00          mov    $0x4,%eax
+   5:   49 89 ca                mov    %rcx,%r10
+   8:   0f 05                   syscall
+   a:   72 01                   jb     d <_libc_write+0xd>
+   c:   c3                      retq
+   d:   64 89 04 25 20 00 00    mov    %eax,%fs:0x20
+  14:   00
+  15:   48 c7 c0 ff ff ff ff    mov    $0xffffffffffffffff,%rax
+  1c:   c3                      retq
+[...]
+--8<---------------cut here---------------end--------------->8---
+
+Lembrando que a arquitetura em que sistema OpenBSD é /amd64/, sabemos
+que o código-fonte que encontraremos em ação nesse sistema tem que ser
+relativo à arquitetura /amd64/.  No diretório
+
+  /usr/src/lib/libc/arch/
+
+a /libc/ armazena as particulares de cada arquitetura suportada por
+ela.  O disassembly de /write.o/ acima se torna claro ao lermos o
+arquivo
+
+  /usr/src/lib/libc/arch/amd64/SYS.h
+
+em que vemos a macro
+
+--8<---------------cut here---------------start------------->8---
+#define SYSTRAP(x)      movl $(SYS_ ## x),%eax; movq %rcx, %r10; syscall
+--8<---------------cut here---------------end--------------->8---
+
+que é exatamente o código de /_libc_write/ exibido acima.  Em
+palavras, o número 4 é copiado para o registrador %eax, o conteúdo do
+registrador %rcx é copiado para o registrador %r10 e uma instrução
+/amd64/ chamada /syscall/ é executada.  No documento
+
+  24594—Rev. 3.33—November 2021
+  AMD64 Architecture Programmer’s Manual
+  Volume 3: General-Purpose and System Instructions.
+
+a empresa ``[A]dvanced [M]icro [D]evices'', descreve a instrução
+/syscall/ na página 467 em que podemos ler que sua função é transferir
+o controle para um ponto específico num sistema operacional:
+
+  ``Transfers control to a fixed entry point in an operating
+    system. [...]  In 64-bit mode, SYSCALL saves the RIP of the
+    instruction following the SYSCALL into RCX and [...]''  (Páginas
+    467--468.)
+
+Se a instrução /syscall/ escreve alguma coisa no registrador %rcx,
+isso nos sugere porque a /libc/ copia o conteúdo de %rcx pra outro
+lugar antes de invocar a instrução /syscall/.  (Quando o a /system
+call/ terminar e o controle do processador voltar ao programa, o
+programa precisa encontrar tudo exatamente como estava antes.)
+
+Esse mergulho que demos na /libc/ revela a diferença que há entre um
+procedimento C que é na verdade uma /system call/ e um procedimento C
+que nada mais é do que é um manipulador de dados na memória do
+computador.
+
+É importante lembrar que nosso mergulho tomou um sistema em particular
+como exemplo --- o OpenBSD 7.0 --- numa certa arquitetura em
+particular, /amd64/.  Cada sistema, cada arquitetura fará o mesmo
+trabalho de um forma mais ou menos diferente.  Não fossem os sistemas
+operacionais, seu trabalho de escrever programas teria que levar todos
+esses detalhes em consideração --- ou seus programas nunca poderiam
+rodar nessas máquinas.  Esses detalhes e diferenças entre máquinas nos
+permitem apreciar a linguagem C e compreender também suas limitações.
+
+Vejamos um exemplo do que a /libc/ faz numa outra arquitetura.  Seu
+telefone celular provavelmente usa uma arquitetura chamada ARM --- que
+hoje significa ``Advanced RISC Machines'', sendo que RISC significa
+``[r]educed [i]nstruction [s]et [c]omputer''.  Se olharmos o código do
+OpenBSD pra executar /system calls/ em arquiteturas ARM, encontraremos
+o arquivo
+
+  /usr/src/lib/libc/arch/arm/sys/syscall.S
+
+cujo código é apenas
+
+--8<---------------cut here---------------start------------->8---
+#include "SYS.h"
+
+RSYSCALL(syscall)
+--8<---------------cut here---------------end--------------->8---
+
+Varrendo o código-fonte do sistema até compreendermos o efeito da
+macro RSYSCALL, encontramos o fato de que seu trabalho é executar a
+instrução /swi/ de um CPU arm:
+
+#define RSYSCALL(x)              \
+        PSEUDO(x,x)
+
+#define PSEUDO(x,y)              \
+        _SYSCALL(x,y);           \
+        mov r15, r14;            \
+        __END(x)
+
+#define _SYSCALL(x, y)           \
+        _SYSCALL_NOERROR(x,y);   \
+        bcs CERROR
+
+#define _SYSCALL_NOERROR(x,y)    \
+        SYSENTRY(x);             \
+        SYSTRAP(y)
+
+#define SYSTRAP(x)               \
+        ldr     r12, =SYS_ ## x; \
+        swi     0;               \  /* <------ a instrução /swi/ */
+        dsb     nsh;             \
+        isb
+
+Num computador ARM, a instrução /swi/ é um apelido para ``software
+interrupt'', que é a instrução que tipicamente é usada para passar
+controle do processador ARM de volta ao sistema (operacional).
+
+Esse segundo exemplo deixa claro que não seria adequado uma linguagem
+de programação se preocupar com cada detalhe de cada sistema
+operacional e de cada /hardware/.  A linguagem C, portanto, não se
+envolve com nada além do essencial para manipular dados na memória de
+um computador.  Entrada e saída --- lidar com o mundo externo --- é
+responsabilidade de outros mecanismos de abstração, como o sistema
+operacional, que abstrai a máquina em si.  Por causa do sistema
+operacional, não somos obrigado a conhecer cada dispositivo de entrada
+e saída --- basta chamar /open/, /read/, /write/, /close/ e o sistema
+(operacional) se encarrega de fazer a coisa certa para o dispositivo
+em questão, seja uma placa de rede, seja o vídeo.
+
+(*) Um passeio por um sistema UNIX
+
+Agora que compreendemos a função das /system calls/ por via do exemplo
+de /write/, podemos concordar que talvez um primeiro passo em estudar
+um sistema operacional seja conhecer os serviços que ele oferece.  São
+muitos.  Vejamos uma lista de serviços que você encontrará em
+praticamente qualquer sistema UNIX e façamos uns breves comentários
+sobre alguns deles.
+
+--8<---------------cut here---------------start------------->8---
+    open: opens a file for reading or writing
+    close: closes a file descriptor
+--8<---------------cut here---------------end--------------->8---
+
+Quer abrir um arquivo pra leitura ou escrita?  Isso só pode ser feito
+por /open/, não é /fopen/ da /stdio/.
+
+--8<---------------cut here---------------start------------->8---
+SYNOPSIS
+       #include <sys/stat.h>
+       #include <fcntl.h>
+
+       int open(const char *path, int oflag, ...);
+--8<---------------cut here---------------end--------------->8---
+
+É fato que /fopen/ terá que eventualmente chamar /open/ porque não há
+outra forma de abrir arquivos no sistema.  O que /open/ retorna,
+quando a abertura é bem sucedida, é um número inteiro que é chamado de
+/file descriptor/ --- um descritor do arquivo, um identificador.
+
+O que é abrir um arquivo exatamente?  Abri-lo significa pedir ao
+sistema pra associar o arquivo a seu processo.  O que chamamos de
+/processo/ é um programa em execução.  O sistema mantém uma tabela de
+processos e cada processo tem uma tabela de arquivos abertos.
+
+Um /file descriptor/ é um identificador de um arquivo *no seu
+processo*.  Dois processos distintos podem ter os mesmos números de
+/file descriptors/ e cada um se refere a arquivos totalmente
+diferentes.
+
+O dual de /open/ é /close/, que fecha o arquivo.  Fechar um arquivo é
+nada mais que remover seu item correspondente na tabela de arquivos
+abertos.
+
+--8<---------------cut here---------------start------------->8---
+    fork: duplicates the current process
+    execl, execv, execle, execve, execlp, execvp: executes a file
+--8<---------------cut here---------------end--------------->8---
+
+A única forma de se executar um programa em sistema UNIX é via
+/execve/, mas o que /execve/ faz é substituir o processo atual pelo
+novo.  Eis o trecho relevante do manual de /execve/.
+
+--8<---------------cut here---------------start------------->8---
+NAME
+     execve - execute a file
+
+SYNOPSIS
+     #include <unistd.h>
+
+     int
+     execve(const char *path, char *const argv[], char *const envp[]);
+
+DESCRIPTION
+     execve() transforms the calling process into a new process.  The
+     new process is constructed from an ordinary file, whose name is
+     pointed to by path, called the new process file.  This file is
+     either an executable object file, or a file of data for an
+     interpreter. [...]
+
+     The argument argv is a pointer to a null-terminated array of
+     character pointers to NUL-terminated character strings.  These
+     strings construct the argument list to be made available to the
+     new process.  At least one non-null argument must be present in
+     the array; by custom, the first element should be the name of the
+     executed program (for example, the last component of path).
+
+     The argument envp is also a pointer to a null-terminated array of
+     character pointers to NUL-terminated strings.  A pointer to this
+     array is normally stored in the global variable environ.
+--8<---------------cut here---------------end--------------->8---
+
+Então como criar um processo sem destruir o atual?  Sistemas UNIX
+adotam a estratégia de executar /fork/, o que duplica o processo atual
+em dois, seguido de /execve/.  O efeito é a criação de um novo
+processo.  Essa estratégia permite resultados interessantes.  Por
+exemplo, um programa abre um certo arquivo e executa /fork/ seguido de
+/execve/, colocando outro programa em seu lugar, o que faz com que o
+novo programa encontre o arquivo anterior já aberto.  Com isso podemos
+modularizar nossos programas --- um programa faz uma coisa, outro
+programa faz outra coisa e fork-execve combinam ambos.  Por exemplo,
+quando pedimos ao /shell/
+
+  ./polonesa.exe 1 + 2 > soma.txt
+
+o que o /shell/ faz é primeiro se duplicar via /fork/ e em uma de suas
+cópias, o /shell/ abre o arquivo soma.txt e pede ao sistema que troque
+a saída padrão pelo arquivo soma.txt.  Daí o /shell/ se substitui
+chamando /execve/, criando o processo /polonesa.exe/.  Então
+/polonesa.exe/ encontra sua saída padrão conectada diretamente ao
+arquivo soma.txt, assim todas as chamadas a /printf/ são equivalentes
+a escrever diretamente no arquivo /soma.txt/.  Dessa forma, usando o
+/shell/, o programa polonesa.c não precisa se preocupar com escrita de
+arquivos.  A função de lidar com arquivos fica com o /shell/.  Isso é
+modularização /UNIX-style/, se pudermos usar esses termos.
+
+--8<---------------cut here---------------start------------->8---
+    sleep: suspends execution for an interval
+--8<---------------cut here---------------end--------------->8---
+
+SYNOPSIS
+       #include <unistd.h>
+       unsigned sleep(unsigned seconds);
+
+Em muitos sistemas, /sleep/ não chega a ser uma chamada ao sistema,
+mas sempre usa alguma chamada ao sistema pra não consumir tempo do
+processador enquanto o programa dorme pelo número de /seconds/
+solicitado.
+
+(*) Uma lista de /system calls/ 
+
+Eis uma lista de serviços que provavelmente encontraremos em qualquer
+sistema UNIX.  Difícil ter certeza de tudo que o MSYS2-MinGW
+implementa nessa simulação UNIX que ele faz no Windows, mas a maior
+parte dessa lista se comporta perfeitamente no Windows por via do
+MSYS2-MinGW.
+
+--8<---------------cut here---------------start------------->8---
+    access: checks if calling process has file access
+    alarm: sets a process's alarm clock
+    chmod: changes the mode of a file
+    chown: changes the ownership of a file
+    chroot: changes the root directory
+    dup, dup2: duplicates an open file descriptor
+    exit: exits a process
+    fcntl: controls open files
+    getpid, getpgrp, getppid: gets group and process IDs
+    getuid, geteuid, getgid, getegid: gets user and group IDs
+    ioctl: controls character devices
+    kill: sends a signal to one or more processes
+    link: links a new file name to an existing file
+    lseek: moves read/write file pointer
+    mknod: makes a directory, special or ordinary file
+    mount: mounts a filesystem
+    msgctl, msgget, msgsnd, msgrcv: message passing support
+    nice: changes priority of a process
+    pause: suspends a process until a signal occurs
+    pipe: creates an interprocess pipe
+    plock: locks a process in memory
+    profil: requests an execution profile
+    ptrace: allows a process to trace the execution of another
+    read: reads from a file
+    semctl, semget, semop: semaphore support
+    setpgrp: sets process group ID
+    setuid, setgid: sets user and group IDs
+    shmctl, shmget, shmop: shared memory support
+    signal: control of signal processing
+    stat, fstat: gets file status
+    stime: sets the time
+    sync: updates the super block
+    time: number of seconds since 1/1/1970
+    times: gets process and child process times
+    ulimit: gets and sets user limits
+    umask: gets and sets file creation mask
+    umount: unmounts a file system
+    uname: gets system information
+    unlink: removes directory entry
+    ustat: gets file system statistics
+    utime: sets file access and modification times
+    wait: waits for a child process to stop or terminate
+    write: writes to a file
+--8<---------------cut here---------------end--------------->8---
+
+Como se vê, podemos passar um semestre inteiro num passeio por um
+sistema operacional.  O fato, entretanto, é que sem a linguagem C
+seria difícil abordar o assunto de forma concreta.  O livro
+
+  ``Advanced programming in the UNIX environment'' de W. Richard
+  Stevens, Stephen A. Rago.  Third edition.  ISBN 978-0-321-63773-4.
+
+lhe oferece um passeio completo por sistemas UNIX.  Com a linguagem C,
+você já pode ler esse livro por completo.
+
+(*) Sua tarefa
+
+(/) Tarefa 1 
+
+Escreva um programa que abra um arquivo usando /open/ usando as opções
+``O_WRONLY | O_TRUNC''.  Assim:
+
+  int fd;
+  fd = open("open-write-hello.txt", O_WRONLY | O_TRUNC);
+  if (fd < 0) {
+    perror("open"); 
+    return 1;
+  }
+
+Em seguida, escreva alguma string nesse arquivo usando /write/ e em
+seguida chame
+
+  sleep(60)
+
+pra pedir ao sistema pra colocar seu programa pra dormir por um
+minuto.  Enquanto ele dorme, abra um outro /shell/ e olhe o arquivo
+escrito por /write/.  Anote o que você observou e vá para a tarefa 2.
+
+O que entregar?  Nada a entregar.
+
+(/) Tarefa 2
+
+Escreva um programa que abra um arquivo usando /fopen/, escreva alguma
+string nesse arquivo usando /fprintf/ e em seguida chame
+
+  sleep(60)
+
+pra pedir ao sistema pra colocar seu programa pra dormir por um
+minuto.  Enquanto ele dorme, abra um outro /shell/ e olhe o arquivo
+escrito por /fprintf/.  Anote o que você observou.
+
+O que entregar?  Nada a entregar.
+
+(/) Tarefa 3
+
+Escreva um parágrafo que responda se há diferença entre suas
+observações nas tarefas 1 e 2.  Se houver, diga quais são e por que
+elas ocorrem.
+
+O que entregar?  Entregue seu arquivo-texto pelo Google Classroom.
+
+(/) Tarefa 4
+
+Execute novamente seu programa escrito na tarefa 2.  Assim que ele
+rodar e estiver dormindo, mate seu programa dizendo ^C a seu shell ---
+ou seja, pressionando CTRL-C no seu teclado.  Isso vai matar seu
+programa antes que ele termine.  Depois que ele morrer, observe o
+conteúdo do arquivo escrito.  O que você observou?  Qual é a
+explicação para o resultado?  Redija sua explicação em um parágrafo.
+
+O que entregar?  Entregue seu arquivo-texto pelo Google Classroom.
+
+(/) Tarefa 5
+
+Consulte a documentação de /fork/ --- diga ``man 3p fork'' no seu
+MSYS2, diga ``man 2 fork'' se você estiver num sistema UNIX, como o
+antartida.xyz ou seu próprio sistema.
+
+--8<---------------cut here---------------start------------->8---
+       #include <unistd.h>
+
+       pid_t fork(void);
+--8<---------------cut here---------------end--------------->8---
+
+Note que /pid_t/ nada mais é que um inteiro representando o processo
+em questão.  Esse procedimento é diferente de tudo que já vimos até o
+momento neste curso.  Como ele cria um novo processo, ele vai retornar
+uma vez para cada processo, então é como se o procedimento fosse
+chamado uma vez, mas retornasse duas vezes.
+
+Leia especialmente a seção ``RETURN VALUE'' do manual do procedimento.
+Note que o novo processo --- que é chamado de processo filho ---
+receberá zero como retorno de /fork/.  Assim seu código pode verificar
+pelo retorno pra saber se ele é o filho ou o pai.  Por exemplo,
+
+--8<---------------cut here---------------start------------->8---
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+  pid_t r = fork();
+  if (r < 0) { perror("fork"); exit(1); }
+  if (r == 0) {
+    printf("sou o filho\n");
+    sleep(60);
+    exit(0);
+  }
+  printf("sou o pai\n");
+  sleep(60);
+  return 0;
+}
+--8<---------------cut here---------------end--------------->8---
+
+Escreva um programa como esse acima e execute-o.  As chamadas a
+/sleep/ farão ambos dormirem antes de morrerem.  Enquanto eles dormem,
+abra um novo /shell/ e diga-lhe ``ps'' pra que possamos ver uma lista
+de processos iniciados pelo seu MSYS2.  Você verá algo como
+
+%ps
+      PID    PPID          COMMAND
+     1417    1354          /usr/bin/ps
+     1415    1414          /home/x/c/syscalls-0.1/fork-me
+     1354    1353  [...]   /usr/bin/bash
+     1353       1          /usr/bin/mintty
+     1112       1          /usr/bin/mintty
+     1113    1112          /usr/bin/bash
+     1414    1113          /home/x/c/syscalls-0.1/fork-me
+
+Consulte a documentação de ps --- ``man ps'' --- e descubra o
+significado das colunas PID e PPID.  Redija um parágrafo explicando os
+números PID e PPID relativo aos processos pai e filho do seu
+experimento.
+
+O que entregar?  Entregue seu arquivo-texto pelo Google Classroom.
+
+(/) Tarefa 6
+
+O programa abaixo é um programa artificial, servindo aqui só pra
+brevemente ilustrar o uso de /fork/ e /wait/.  O programa cria um novo
+processo para fatorar o número 1763 = 41 * 43.  Ao executá-lo, você
+verá que tipicamente o processo-pai termina antes do processo-filho.
+
+%./fatore-1763.exe
+processo-pai: fim
+processo-filho: rodando...
+processo-filho: fator encontrado
+%
+
+Sua tarefa é fazer o processo-pai aguardar o processo-filho e ainda
+aproveitar a informação produzida pelo processo-filho.
+
+--8<---------------cut here---------------start------------->8---
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/wait.h>
+#include <math.h>
+#include <time.h>
+
+int main(int argc, char *argv[]) {
+  unsigned long N = 1763; // o composto que queremos fatorar
+ 
+  pid_t r = fork();
+  if (r < 0) { perror("fork"); exit(1); }
+
+  if (r == 0) {
+    printf("processo-filho: rodando...\n");
+    time_t t = time(NULL);
+    if (0 == t % 2) {
+      for (int i = 2; i < sqrt(N); ++i) {
+        if (0 == N % i) {
+          printf("processo-filho: fator encontrado\n");
+          exit(i);
+        }
+      }
+    }
+    else {
+      for (int i = N - 1; i >= 2; --i) {
+        if (0 == N % i) {
+          printf("processo-filho: fator encontrado\n");
+          exit(i);
+        }
+      }
+    }
+    printf("processo-filho: fator não encontrado\n");
+    exit(1); // processo-filho morre aqui de qualquer forma
+  }
+  
+  /* 
+     Adicione uma chamada a wait() de forma que o processo-pai consiga
+     esperar pelo filho terminar antes do processo-pai morrer.  Use a
+     macro WEXITSTATUS() --- veja documentação de wait() --- pra obter
+     o fator encontrado pelo processo-filho, entregue a wait() por via
+     de exit().  Quem faz essa comunicação entre processos é o
+     sistema; por isso esses procedimentos são /system calls/.
+  */
+
+  printf("processo-pai: fim\n");
+  return 0;
+}--8<---------------cut here---------------end--------------->8---
+
+Como proceder?  Consulte a documentação de /wait/ --- ``man 3p wait''
+no MSYS2, ``man 2 wait'' em sistemas UNIX.  Use /wait/ pra fazer com
+que o processo-pai não só aguarde o processo-filho terminar, mas
+também consiga obter o número entregue ao sistema por via de /exit/.
+
+Seu programa não deve conter uma chamada a /sleep/ sequer.
+
+Redija seus parágrafos explicando o funcionamento de todas as /system
+calls/ usadas pelo programa /no contexto do programa/.  (Ignore
+/printf/.)
+
+O que entregar?  Entregue seu arquivo-texto pelo Google Classroom.
+
+(*) Apêndice A
+
+Olhamos o procedimento /write/ da /libc/ do lado aplicação, nunca do
+lado do sistema em si.  Pra ver o lado do sistema, precisamos olhar o
+código-fonte do sistema operacional em si.  No OpenBSD 7.0, o código
+relativo à /system call write/ está em 
+
+  /usr/src/sys/kern/sys_generic.c
+
+onde encontramos os procedimentos abaixo.  Não temos como compreender
+exatamente um código desse porque não compreendemos o OpenBSD em si,
+mas é uma boa ilustração de código C exatamente do tipo que temos lido
+e escrito.  Eis aí estruturas, ponteiros, números, constantes do
+pré-processador /et cetera/.
+
+/*
+ * Write system call
+ */
+int
+sys_write(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_write_args /* {
+		syscallarg(int) fd;
+		syscallarg(const void *) buf;
+		syscallarg(size_t) nbyte;
+	} */ *uap = v;
+	struct iovec iov;
+	struct uio auio;
+
+	iov.iov_base = (void *)SCARG(uap, buf);
+	iov.iov_len = SCARG(uap, nbyte);
+	if (iov.iov_len > SSIZE_MAX)
+		return (EINVAL);
+
+	auio.uio_iov = &iov;
+	auio.uio_iovcnt = 1;
+	auio.uio_resid = iov.iov_len;
+
+	return (dofilewritev(p, SCARG(uap, fd), &auio, 0, retval));
+}
+
+int
+dofilewritev(struct proc *p, int fd, struct uio *uio, int flags,
+    register_t *retval)
+{
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	long cnt, error = 0;
+	u_int iovlen;
+#ifdef KTRACE
+	struct iovec *ktriov = NULL;
+#endif
+
+	KASSERT(uio->uio_iov != NULL && uio->uio_iovcnt > 0);
+	iovlen = uio->uio_iovcnt * sizeof(struct iovec);
+
+	if ((fp = fd_getfile_mode(fdp, fd, FWRITE)) == NULL)
+		return (EBADF);
+
+	/* Checks for positioned write. */
+	if (flags & FO_POSITION) {
+		struct vnode *vp = fp->f_data;
+
+		if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO ||
+		    (vp->v_flag & VISTTY)) {
+			error = ESPIPE;
+			goto done;
+		}
+
+		if (uio->uio_offset < 0 && vp->v_type != VCHR) {
+			error = EINVAL;
+			goto done;
+		}
+	}
+
+	uio->uio_rw = UIO_WRITE;
+	uio->uio_segflg = UIO_USERSPACE;
+	uio->uio_procp = p;
+#ifdef KTRACE
+	/*
+	 * if tracing, save a copy of iovec
+	 */
+	if (KTRPOINT(p, KTR_GENIO)) {
+		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
+		memcpy(ktriov, uio->uio_iov, iovlen);
+	}
+#endif
+	cnt = uio->uio_resid;
+	error = (*fp->f_ops->fo_write)(fp, uio, flags);
+	if (error) {
+		if (uio->uio_resid != cnt && (error == ERESTART ||
+		    error == EINTR || error == EWOULDBLOCK))
+			error = 0;
+		if (error == EPIPE) {
+			KERNEL_LOCK();
+			ptsignal(p, SIGPIPE, STHREAD);
+			KERNEL_UNLOCK();
+		}
+	}
+	cnt -= uio->uio_resid;
+
+	mtx_enter(&fp->f_mtx);
+	fp->f_wxfer++;
+	fp->f_wbytes += cnt;
+	mtx_leave(&fp->f_mtx);
+#ifdef KTRACE
+	if (ktriov != NULL) {
+		if (error == 0)
+			ktrgenio(p, fd, UIO_WRITE, ktriov, cnt);
+		free(ktriov, M_TEMP, iovlen);
+	}
+#endif
+	*retval = cnt;
+ done:
+	FRELE(fp, p);
+	return (error);
+}

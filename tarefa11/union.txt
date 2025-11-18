@@ -1,0 +1,181 @@
+
+Caros estudantes, nesta aula investigamos as /unions/, um recurso da linguagem C que nos permite economizar espaço quando queremos armazenar um tipo ou outro --- mas nunca ambos juntos. Na próxima aula veremos mais alguns detalhes da linguagem como enums e bit-fields.  Na próxima semana de aula retornamos às system calls com fork, dup2, execve (compreendendo assim o que o shell faz no redirecionamento de /file descriptors/) e assim fechamos o semestre.  É o relatório.  Bons estudos.
+
+Comentários particulares
+(*) Sobre a palavra ``união''
+
+Você já conhece a união de conjuntos, mas o significado da palavra
+neste contexto será diferente.  Quando falamos sobre estruturas de
+dados, a palavra união sugere a conjunção de dois tipos de dados
+diferente.  Por exemplo, suponha que definamos um tipo chamado
+Registro da seguinte forma.
+
+Definição.  Um Registro é
+
+  - Inteiro ou uma...
+  - String
+
+Em palavras, estamos dizendo que um Registro é uma de duas coisas ---
+ou um inteiro ou uma string e não ambos.  Isso é um exemplo de
+``união''.
+
+(*) Recorde nossa aula sobre estruturas recursivas
+
+Recorde nossa definição de /List/ naquela aula.
+
+--8<---------------cut here---------------start------------->8---
+Definição.  Uma /List/ é 
+
+  - EMPTY ou...
+  - cons(dados, tamanho_do_dado, List)
+--8<---------------cut here---------------end--------------->8---
+
+Isso é um exemplo de união.  Naquela aula, dissemos
+
+  ``Devemos ler essa definição da seguinte forma: uma lista é uma
+  coisa /EMPTY/ ou é a construção de um elemento novo anexado a uma
+  /List/ já existente --- passada como argumento para /cons/.''
+
+Observe que ou a lista está vazia ou não está vazia.  Quando não está,
+então ela é um ``cons''.  (Um cons nada mais é que um par, armazenando
+um valor e um ponteiro para outra lista.)
+
+(*) Uniões na linguagem C
+
+Na linguagem C o uso da palavra ainda é bem parecido.  Uma união é
+declarada similarmente a estruturas, mas enquanto estruturas agregam
+valores, as uniões oferecem ou /um/ valor ou o /outro/ e nunca ambos.
+Em outras palavras, uma variável que seja uma união pode representar
+um tipo ou outro --- de tamanhos diferentes que sejam.  É um recurso
+pra usar o mesmo espaço na memória ora como um tipo (de um certo
+tamanho), ora como outro tipo (de um certo outro tamanho).
+
+Suponha que você queira escrever um programa que lê do usuário ou um
+número inteiro, ou uma string.  Se você usar uma estrutura contendo um
+int e um char*, você desperdiça espaço.  Se usar uma união, economiza
+porque ou o valor é um inteiro ou é uma string e nunca ambos ao mesmo
+tempo.  Não é necessário alocar espaço pra ambos tipos.
+
+(*) Como se declara?
+
+Similar às estruturas.  Por exemplo, a sintaxe
+
+  union value {
+    int ival;
+    char *sval;
+  };
+  
+declara uma união chamada /value/ que contém ou um int chamado /ival/
+ou um ponteiro pra char chamado /sval/.  
+
+(*) Como se aloca espaço pra usar essa /union/?  
+
+Similar às estruturas.  Por exemplo,
+
+  union value r;
+
+aloca na variável r espaço suficiente pra usar a união /value/.
+
+(*) Como se usa uma união?
+
+Uma forma simples de pensar sobre uma união é como uma variável que
+seja de um um único tipo --- o tipo que você está usando no momento
+que usa.  Se você quiser usar /value/ como um inteiro, sempre
+escreverá /r.ival/ e se quiser usar como /char*/ sempre escreverá
+/r.sval/.  (Você só precisa manter essa consistência.)
+
+É um erro armazenar um inteiro em /r/ e depois lê-lo como se /char*/
+fosse, e vice-versa --- diríamos aí que seu uso é inconsistente.  É
+responsabilidade sua manter essa consistência.  A linguagem C não
+determina o que o compilador /tem/ que fazer quand o uso
+inconsistente.  Um uso inconsistente, portanto, faz com que seu
+programa não seja um programa C.
+
+(*) Como se usa um ponteiro pra uma união?
+
+Similar às estruturas.  Por exemplo, 
+
+  union value *s; s = &r;
+
+Lembre-se de que um ponteiro pra uma união é só um ponteiro e não uma
+união.
+
+(*) Tarefa 1
+
+Escreva um programa que mostre o tamanho de /union value/ e explique
+(em língua portuguesa) o tamanho que seu programa lhe mostra.
+
+O que entregar?  Sua explicação.
+
+(*) Tarefa 2 
+
+Considere o seguinte programa e responda às perguntas.
+
+--8<---------------cut here---------------start------------->8---
+#include <stdio.h>
+
+union value {
+  int ival;
+  char *sval;
+};
+
+struct record {
+  char *name;
+  int type;
+  union value v;
+};
+
+#define INT 0
+#define STR 1
+
+int main() {
+
+  struct record r;
+  r.name = "Love Story";
+  r.type = INT;
+  r.v.ival = 1970;
+  printf("name = %s, year = %d, size = %ld\n", r.name, r.v.ival, sizeof r.v);
+
+  r.name = "Dr. Jhivago";
+  r.type = STR;
+  r.v.sval = "Omar Sharif";
+  printf("name = %s, star = %s, size = %ld\n", r.name, r.v.sval, sizeof r.v);
+
+  return 0;
+}
+--8<---------------cut here---------------end--------------->8---
+
+Pergunta 1.  A /union value/ é uma declaração, definição ou ambos?
+Explique o que no código provê a evidência para sua resposta.  Por
+exemplo, você pode mostrar a diferença entre uma declaração e uma
+definição, se houver.
+
+O que entregar?  Sua resposta num arquivo-texto.
+
+Pergunta 2. Na declaração da estrutura /record/, o membro 
+
+  union value v 
+
+é uma declaração, definição ou ambos?  Há alguma inicialização?
+Explique seu entendimento.
+
+O que entregar?  Sua resposta num arquivo-texto.
+
+(*) Tarefa 3
+
+Uniões são como arrays ou como estruturas quando passadas a
+procedimentos?  Em outras palavras, elas são copiadas pra dentro do
+procedimento como as estruturas ou decaem para ponteiros como os
+arrays?  Explique o que você pensa e prove sua resposta ao exibir um
+programa que você escreveu e que sabe explicar.
+
+O que entregar?  Sua resposta num arquivo-texto e seu arquivo.c.
+
+(*) Tarefa 4
+
+Prove que é possível usar um array de uniões escrevendo um programa
+que ilustre o uso de um array de uniões.
+
+O que entregar?  Sua resposta num arquivo-texto e seu arquivo.c.
+unions.txt
+Exibindo unions.txt.
