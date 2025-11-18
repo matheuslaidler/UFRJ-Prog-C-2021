@@ -1,0 +1,99 @@
+*) Introdução
+
+Download, 5.5MiB: 
+
+  http://c.antartida.xyz/pkg/stdio-0.1.tar.gz
+
+Leia completamente o capítulo 7.  Note que anexamos pra você o
+capítulo 7 da versão original do livro de Brian Kernighan e Dennis
+Ritchie, mas também a versão traduzida por Daniel Vieira.  Se optar
+por ler a tradução, note que a primeira frase da página 153 da
+tradução está incorretamente traduzida.  Brian Kernighan escreveu
+
+--8<---------------cut here---------------start------------->8---
+  Input and output are not part of the C language itself, so we have
+  not emphasized them in our presentation thus far. [Capítulo 7,
+  página 124]
+--8<---------------cut here---------------end--------------->8---
+
+mas a tradução diz o contrário
+
+--8<---------------cut here---------------start------------->8---
+  As facilidades de entrada e saída são parte integrante da própria
+  linguagem C, como enfatizado na nossa apresentação até
+  agora. [Capítulo 7, página 153]
+--8<---------------cut here---------------end--------------->8---
+
+A informação correta é a escrita por Brian Kernighan.  Entrada e saída
+**não** é parte da linguagem C porque entrada e saída requer serviços
+do sistema operacional, como procedimentos como read() e write(), que
+são chamados de /system calls/.  O que a biblioteca padrão faz é
+minimizar as dependências do sistema, o que ajuda o escritor da
+biblioteca padrão, tornando a /biblioteca/ mais portável --- não a
+linguagem C, que nada tem a ver com o tema.  Não quer dizer que a
+linguagem não lhe dê garantias sobre printf(), scanf() et cetera.  As
+garantias são elencadas no padrão da linguagem.
+
+(*) Exemplo
+
+Incluímos um exemplo do uso de fgets(), scanf(), sscanf() e printf().
+
+%./read-events.exe < database.txt
+Dia 22 de junho de 1986        --> Copa do Mundo de 1986, La mano...
+Dia 1 de janeiro de 1970       --> The UNIX Epoch.
+Dia 3 de setembro de 1752      --> Um dia que nunca existiu na In...
+Dia 6 de dezembro de 1970      --> Lançamento de ``Love Story (1...
+Dia 5 de maio de 2022          -->
+Dia 11 de dezembro de 1950     --> ``What Desires Are Politically...
+%
+
+Antes de ler o read-events.c, observe o arquivo database.txt.  Há uma
+série de linhas-registros lá.  Às vezes a linha-registro é válida; às
+vezes não.
+
+Agora leia o read-events.c.  Esse programa lê a base de dados e extrai
+cuidadosamente os pedaços de informação que existem lá.  Procure
+imaginar o trabalho que seria escrever um programa assim sem usar
+scanf(), printf() e família.
+
+(*) Sua tarefa
+
+Agora que você leu o capítulo 7, estudou e compreendeu o
+read-events.c, seu trabalho será modificar read-events.c e gerar uma
+nova versão dele.  O programa read-events.c lê a base de dados pela
+entrada padrão, tirando vantagem do shell.  
+
+**Sua tarefa é escrever um novo programa, baseado no read-events.c, 
+que use a stdio para ler a base de dados sem usar os serviços de 
+redirecionamento de arquivo do shell, ou seja, você vai precisar 
+aprender a usar fopen(), fclose() e fgets().  Você vai ter que 
+ajustar o procedimento my_getline() em getline.c.  
+**Sua tarefa é fazer a mesma coisa que read-events.c faz,
+mas sem usar a /stdin/.**  
+Elegante será se você permitir ao usuário a especificar o arquivo 
+da base de dados pela linha de comando, ou seja, usando 
+/main(int argc, char *argv[])/, permitindo seu usuário a
+trabalhar com várias bases de dados de conteúdo diferentes.
+
+Responda as seguintes perguntas a si mesmo.  O que acontece se
+removermos as chamadas a memset() em read-events.c?  Por que não
+usamos scanf() sem fgets() se scanf() é capaz de ler diretamente da
+entrada padrão ou de algum arquivo aberto por fopen()?  Em outras
+palavras, por que estamos delegando o trabalho pra fgets() primeiro?
+A resposta mais importante é o fato de que fgets() consome um
+argumento chamado /n/ fazendo com que ela leia não mais que n - 1
+bytes.  Por que isso é importante pra gente?  (Você não tem que
+entregar suas respostas.  Use essas perguntas como guia para seu
+entendimento, se você se importar com o assunto.)
+
+Quando terminar a tarefa com sucesso, pergunte-se o que você prefere
+--- escrever seu programa usando as facilidades do shell ou ignorando
+as facilidades do shell e usando fopen(), fclose() et cetera.
+
+(*) O que entregar?
+
+Entregue dois arquivos --- seu read-events.c modificado bem como seu
+getline.c modificado.  Pedimos gentilmente que você anexe os dois
+arquivos separadamente no Classroom --- ou seja, *sem* empacotá-los de
+qualquer forma como num ZIP.  Queremos ler e compilar seu programa,
+logo um PDF com o código /não/ nos é útil.  Muito obrigado.

@@ -1,0 +1,183 @@
+Tarefa 7.1 :: 2345 base 10 -> 3000321 base 4 -> 343340 base 5 -> 12345 base 10 
+
+//cuidado, não é a mesma coisa que:// 12345 base 5 -> 194 base 10 //  12345 base 4 -> 102 base 5 // ...
+
+tarefa 7.2;
+
+::Como funciona o processo de conversão de bases?::
+
+As conversões numéricas são importantes e bem utilizadas na área da computação. 
+Para muitos que iniciam acham ser um bicho de sete cabeças, mas não chega nem perto disso.
+Estamos acostumados com a base numérica decimal (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 , 11, ...), mas como no mundo teconologico como conhecemos os dispositivos eletrônicos tendem a trabalhar em baixo nível com a base numérica binária (0 ou 1), veremos ela primeiro por ser mais fácil de explicar por ela, até porque ela tem sua importância devido aos números binários serem facilmente representados na eletrônica através de pulsos elétricos. Assim também conseguiremos aprender as bases numéricas octal e hexadecimal, que também são muito utilizadas pela fácil representação.
+
+Vamos inicialmente falar sobre o que de fato estamos falando.
+Resumidamente a base numérica representa a quantidade de 'símbolos' possíveis para representar um determinado número. 
+Ou seja, decimal seria um padrão de dez números, logo o que vier depois será representado pelos números anteriores. 
+Se decimal vai de 0 a 9, todos os número depois disso serão representados de uma junção de números que vão de 0 a 9, como o próprio 10 que é o '1' e o '0'. 
+	(Agora, porque nessa ordem? é como se voltassemos pra utilizar os números de trás para continuar, n da pra voltar pelo 0 se não iria somente repetir tudo e não continuar, então precisamos agr partir do 1 para começar e formar o 10 até 19 e depois já partir pro 2 e formar o 20. Falaremos mais pra frente sobre decimal e outros formatos.
+
+Veremos abaixo as bases que poderemos ver em nossa área e suas representações.
+Bases:				Composto de:
+Decimal				0, 1, 2, 3, 4, 5, 6, 7, 8 e 9
+Binário				0 e 1
+Octal				0, 1, 2, 3, 4, 5, 6 e 7
+Hexadecimal			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E e F
+
+Olhando pra isso será mais fácil reparar que o que eu escrevi anteriormente sobre a base decimal vai acontecer com as outras bases também, isto é, quando chegamos no último símbolo precisamos incrementar o número da esquerda para representar o próximo. 
+Voltando a exemplificar com a base 10, quando percebemos que todos os números da base decimal se resumem de composições de 0 a 9, vemos que quando chegamos no 9, precisamos do símbolo 1 para formar o 10 e os próximos números (10,11,12,13..), como se usassemos o 0 pra ir até o 9, o 1 pra ir até o 19, o 2 pra ir até o 29 e por aí vai. Todos eles vem do que vamos pegando entre 0 e 9, certo?. 
+O mesmo vale para as outras bases numéricas. Por exemplo, no octal, quando chegamos no 7, o próximo número é 10, ao chegar no 17, o próximo é 20 e assim sucessivamente. 
+No binário, contamos assim: 0, 1, 10, 11, 100, 101, 110, 111, 1000, 1001, ... 
+A ideia, então, se baseia nessa lógica e padrão.
+
+Beleza, entendemos o que são as bases, suas simbologias e funcionalidades, mas e quanto a CONVERSÃO NUMÉRICA?
+
+Vamos explicar com um exemplo, veremos de DECIMAL para BINÁRIO
+Primeiro, entenda que a conversão numérica é realizada através de divisões consecutivas. 
+Ou seja, em binário dividimos o número da base decimal por 2 *até que não seja mais divisível*, finalizando esta etapa, pegamos o resultado da última divisão e juntamos com os restos das divisões. Exemplo...
+
+Vamos converter o número 34 para a base binária.
+34/2 = 17 (resto 0)
+17/2 = 8 (resto 1)
+8/2 = 4 (resto 0)
+4/2= 2 (resto 0)
+2/2 = 1* (resto 0)
+Resultado da ultima = 1 com mais o Resto das outras divisões (incluíndo a última, indo dos últimos aos primeiros) = 0 0 0 1 0
+resultando em: 1 0 0 0 1 0 (base 2)
+(Não se esqueça de utilizar o resultado da última divisão para formar o número binário!)
+
+Percebeu que binário é a base 2 e que, portanto, a divisão é sempre por 2? 
+Para as outras bases seguirá o mesmo princípio, isto é, para octal será dividido por 8, para hexadecimal por 16 e por aí vai.
+(Pode utilizar os sentidos das palavras e seus préfixos para te ajudar a lembrar de quanto terá que dividir, por exemplo, quando falamos octal já percebemos que será por oito.)
+
+Agora que entendemos todo o modus operandi de como o primeiro exercício foi feito, vamos mostrar uma última exemplificação da conversão de bases:
+Se fizermos o '12345' base 10 para a base 4 como do exercício feito anteriormente, a conversão será feita assim: 
+(((% = resto, // = divisão)))
+------------------------
+Convertendo para base 4
+
+12345//4 = 3086 (% 1);  
+3086//4 = 771 (%   2); 
+771//4 = 192 (%    3); 
+192//4 = 48 (%     0); 
+48//4 = 12 (% 	   0); 
+12//4 = *3* (% 	   0);
+
+Resultando em...
+
+	=  *3 0 0 0 3 2 1*
+------------------------
+
+Tarefa 7.3;
+
+3000321 base 4 -> 3039 base 16 
+3000321 base 4 -> 11000000111001 base 2
+
+Explicação e resolução:
+
+Para convertermos da forma como explicamos anteriormente, precisamos que a base seja 10.
+Convertendo 3000321 para base 10.
+3 0 0 0 3 2 1 => 7 numeros ( 0 - 6 ) -> serão expoentes
+base original => 4 -> será o valor padrão da multiplicação com a exponenciação
+Multiplicaremos cada número pela base e seu expoente (de 0 a 6,como sempre começando dos últimos). 
+(É como se seu número fosse uma array de elementos, sendo o primeiro (0) o último. 
+A ordem de 0 a 6 pros expoentes seguirá para cada posiçãok, isto é, o primeiro elemento terá na exponenciação da base o valor de 0, o segundo o 1 e por aí vai).
+Resumidamente, irá pegar cada número e multiplicar pelo resultado da exponenciação da base e a 'posição' do número da array invertida. 
+Depois somará todos os resultados.
+
+Para ficar mais claro, veremos como foi feito pelo passo a passo abaixo>
+Exemplo:
+3 * (4 **6) = 12288
+0 * (4 **5) = 0
+0 * (4 **4) = 0
+0 * (4 **3) = 0
+3 * (4 **2) = 48
+2 * (4 **1) = 8
+1 * (4 **0) = 1
+			= 12345
+			
+			------------outro exemplo de conversão para base decimal, dessa vez de um octal---------
+				Base^EXPOENTE -> 8^4	8^3		8^2		8^1		8^0
+				Resultado ->	4096	512		64		8		1
+								---------------------------------------
+				Nmr Octal		5		3		7		5		6
+				Multiplicação	5*4096	3*512	7*64	5*8		6*1
+				Soma			20480 + 1536  + 448  +  40   +  6 
+				Resultado:		22510
+			----------------------------------------------------------------------------------------
+			
+Convertendo 12345 para binário (2)
+12345 / 2 = 6172 resto 1
+6172 / 2 = 3086 resto 0
+3086 / 2 = 1543 resto 0
+1543 / 2 = 771 resto 1
+771 / 2 = 385 resto 1
+385 / 2 = 192 resto 1
+192 / 2 = 96 resto 0
+96 / 2 = 48 resto 0 
+48 / 2 = 24 resto 0
+24 / 2 = 12 resto 0
+12 / 2 = 6 resto 0
+6 / 2 = 3 resto 0
+3 / 2 = 1 resto 1
+		1 		1 0 0 0 0 0 0 1 1 1 0 0 1
+	  = 11000000111001
+
+Convertendo 12345 para hexadecimal (16)
+12345/16 = 771 resto 9
+771/16 = 48 resto 3
+48/16 = 3 resto 0
+		3       0 3  9
+		Resultado = 3039
+
+ - Explique --- usando seu exercício como exemplo --- 
+por que os casos em que a 
+base de destino é uma potência da base de origem (ou vice-versa) é tão mais fácil de 
+escrever do que quando não há essa relação.
+
+-
+
+Podemos, assim, perceber e verificar que...
+
+base 4 para 16:
+4^2 = 16
+16 eh potência de 4
+2^4 = 16 
+16 eh potência de 2
+ -> por isso o numero ficou menor
+ (ou seja, sendo da base 4 pra 16 ou da base 2 pra 16 fica mais fácil de escrever)
+ 
+base 4 para 2:
+4^1 = 4
+2 não eh potência de 4
+ -> por isso o numero ficou maior
+ (Porém, 4 é potencia de 2, ent se fosse de base 2 pra 4 seria, apenas por essa ótica, mais fácil de escrever, porém 12345 não é um número binário e mesmo que fosse em base 10 ficaria grande pois 2 não é expoente de 10)
+ 
+ 
+ Fazendo uma observando pela lógica e pelos exemplos das soluções feitas acima, podemos observar que a conversão da base 4 para decimal existe a utilização da base e da exponenciação. Já com a base 10 para outras bases iremos dividindo da base que queremos. Então é meio lógico que bases de números que são expoentes do outro chegam na forma 'irredutível' mais rápido.
+ 
+ mais exemplos que mostram isso:
+ 
+ 3^2 = 9 -> 9 eh potência de 3
+ base 3 para 9:
+ 12345(10) -> 121221020(3)
+ 121221020 -> 17836(9)
+	12345/9 = 1371 resto 6
+	1371/9 = 152 resto 3
+	152/9 = 16 resto 8
+	16/9 = 1 resto 7
+		 = 17836 
+ base 5 para 25
+ 5^2 = 25 -> 25 eh potência de 5
+ base 5 pra 25:
+ 12345 (base10) -> 343340 (base5)
+ 343340 (base5) -> jik (base 25) (Como eu não conheço o padrão da base 25, acabei usando calculadora, mas é para mostrar como fica um resultado mais clean).
+
+
+------------convertendo qlqr base---------------------------
+Base^EXPOENTE ->... N^4	     N^3		N^2		N^1		N^0
+Resultado ->		.. 	  	 ..			..		N		1
+------------------------------------------------------------
+NMR					X		 Y			Z		I		M
+				   (X*..) + (Y*..)  +  (Z*..) + (I*N) + (M*1)
+Resultado:			Valor do número em decimal
+------------------------------------------------------------
